@@ -12,7 +12,7 @@ function service(options={}){
  const file=path.join(dir,'jogadores.json');
  const store=require('./shared-store.cjs').sharedStore(dir),clock=options.now??Date.now;let db=store.load(),festival,handling=false;
  db.inviteCode??=crypto.randomBytes(6).toString('hex');
- const runtime=new Map(),attempts=new Map(),presence=new Map(),ticketAttempts=new Map(),chatRetentionMs=30*60*1000;
+ const runtime=new Map(),attempts=new Map(),presence=new Map(),ticketAttempts=new Map(),chatRetentionMs=30*60*1000,notices=[],noticeSeen=new Map(),noticeTtlMs=10*60*1000;
  db.tickets??=[];
  db.chatMessages??=[];const chatEpoch=crypto.randomUUID();let chatSequence=Math.max(0,...db.chatMessages.map(m=>m.id??0));
  function onlineSnapshot(user){const at=clock();presence.set(user.id,at);for(const [id,seen]of presence)if(at-seen>=300000)presence.delete(id);return {onlineCount:presence.size,online:db.users.filter(u=>presence.has(u.id)).map(u=>u.name),presenceAt:at};}
@@ -82,9 +82,13 @@ function service(options={}){
  function result(res,status,value,headers={}){let data=Buffer.from(JSON.stringify(value));const encoding=res.mhAcceptEncoding??'';if(data.length>1024&&acceptsEncoding(encoding,'gzip')){data=gzipSync(data,{level:1});headers['Content-Encoding']='gzip';}res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',Vary:'Accept-Encoding','Content-Length':data.length,...headers});res.end(data);}
  async function body(req){let data='';for await(const chunk of req){data+=chunk;if(Buffer.byteLength(data)>2e6)throw Error('Requisição muito grande.');}return data?JSON.parse(data):{};}
  function publicListing(l){const u=db.users.find(u=>u.id===l.seller);return {id:l.id,seller:u?.name??'Jogador',mine:false,price:l.price,type:l.type??'hero',source:l.source,hero:l.hero,weapon:l.weapon?marketRules.publicWeapon(l.weapon):undefined};}
+ function pruneNotices(at=clock()){for(let i=notices.length-1;i>=0;i--)if(!(notices[i].expiresAt>at))notices.splice(i,1);const live=new Set(notices.map(n=>n.id));for(const [id,seen] of noticeSeen){for(const noticeId of seen)if(!live.has(noticeId))seen.delete(noticeId);if(!seen.size)noticeSeen.delete(id);}}
+ function publicNotices(user){pruneNotices();const seen=noticeSeen.get(user.id);return notices.filter(n=>!seen?.has(n.id)).map(({id,text,at,expiresAt})=>({id,text,at,expiresAt}));}
+ function hostMachine(req){const host=/^(127\.0\.0\.1|localhost)(:\d+)?$/i.test(req.headers.host??'');const addr=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);const tunnel=req.headers['x-forwarded-for']||req.headers['x-forwarded-host']||req.headers.forwarded||req.headers['cf-connecting-ip']||req.headers['x-real-ip']||req.headers['ngrok-trace-id'];return host&&addr&&!tunnel;}
+ function noticeTokenOk(req){const expected=options.noticeToken,got=req.headers['x-pacto-aviso'];if(typeof expected!=='string'||typeof got!=='string')return false;const a=Buffer.from(expected),b=Buffer.from(got);return a.length>=16&&a.length===b.length&&crypto.timingSafeEqual(a,b);}
  function isAdmin(user){return !!user?.canImport&&user.name?.toLocaleLowerCase()==='admin';}
  function ticketAdmin(user){return isAdmin(user);}
- function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true},equipment:equipment.view(e.player),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
+ function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true},equipment:equipment.view(e.player),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
  function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now());db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
  async function handleRequest(req,res,url){
   if(!url.pathname.startsWith('/shared-api/'))return false;
@@ -98,6 +102,15 @@ function service(options={}){
    if(advanceFestival(clock()))persist();
    const localRequest=/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(req.headers.host??'')&&!req.headers['cf-connecting-ip']&&['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
    if(route==='host-info'){result(res,localRequest?200:403,localRequest?{inviteCode:db.inviteCode}:{error:'Disponível somente no PC que hospeda.'});return true;}
+   if(route==='host/notice'){
+    if(!hostMachine(req)||!noticeTokenOk(req)){result(res,403,{error:'Disponível somente no PC que hospeda.'});return true;}
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    const text=typeof data.text==='string'?data.text.replace(/\s+/g,' ').trim():'';
+    if(!text||text.length>300||/[\x00-\x1f\x7f]/.test(text)){result(res,400,{error:'Escreva um aviso de até 300 caracteres.'});return true;}
+    const at=clock(),notice={id:crypto.randomUUID(),text,at,expiresAt:at+noticeTtlMs};
+    notices.push(notice);while(notices.length>8)notices.shift();pruneNotices(at);
+    result(res,200,{ok:true,id:notice.id,text:notice.text,expiresAt:notice.expiresAt,expiresInMinutes:10});return true;
+   }
    if(route==='register'||route==='login'){
     if(req.method!=='POST'){result(res,405,{});return true;}
     const ip=req.socket.remoteAddress,key=ip+':'+route,old=attempts.get(key),rate=old&&old.until>Date.now()?old:{count:0,until:Date.now()+60000};rate.count++;attempts.set(key,rate);if(rate.count>12){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
@@ -131,6 +144,13 @@ function service(options={}){
     const headers=issue(target,req);result(res,200,payload(target),headers);return true;
    }
    const user=authenticate(req);if(!user){result(res,401,{error:'Entre no seu perfil para continuar.'});return true;}
+   if(route==='notice/dismiss'){
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    const id=typeof data.id==='string'?data.id:'';
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)){result(res,400,{error:'Aviso inválido.'});return true;}
+    const seen=noticeSeen.get(user.id)??new Set();seen.add(id);noticeSeen.set(user.id,seen);pruneNotices();
+    result(res,200,{ok:true,notices:publicNotices(user)});return true;
+   }
    if(route==='tickets'&&req.method==='POST'){
     const title=typeof data.title==='string'?data.title.trim():'',description=typeof data.description==='string'?data.description.trim():'',category=data.category;
     if(!['bug','visual','balance','other'].includes(category)||title.length<4||title.length>90||description.length<15||description.length>1200||/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(title+description)){result(res,400,{error:'Informe um título de 4 a 90 caracteres e uma descrição de 15 a 1200 caracteres.'});return true;}
@@ -157,10 +177,10 @@ function service(options={}){
       db.chatMessages.push({id:++chatSequence,name:user.name,text,at,userId:user.id,clientId});persist();
      }
     }
-    result(res,200,{chatEpoch,messages:db.chatMessages.map(({id,name,text,at})=>({id,name,text,at})),...onlineSnapshot(user)});return true;
+    result(res,200,{chatEpoch,messages:db.chatMessages.map(({id,name,text,at})=>({id,name,text,at})),...onlineSnapshot(user),notices:publicNotices(user)});return true;
    }
    if(route==='logout'){if(req.method!=='POST'){result(res,405,{});return true;}const token=req.headers.cookie?.match(/mh_session=([a-f0-9]{64})/)?.[1],hash=token&&crypto.createHash('sha256').update(token).digest('hex');db.sessions=db.sessions.filter(s=>s.hash!==hash);presence.delete(user.id);persist();result(res,200,{ok:true},{'Set-Cookie':'mh_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});return true;}
-   if(route==='presence'){result(res,200,onlineSnapshot(user));return true;}
+   if(route==='presence'){result(res,200,{...onlineSnapshot(user),notices:publicNotices(user)});return true;}
    const engine=actor(user);
    if(route.startsWith('tutorial/')){
     const tutorial=require('./tutorial-rules.cjs');let outcome;

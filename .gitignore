@@ -8,6 +8,7 @@ LINK PARA MEU IRMAO.txt
 backups/
 .pixellab-status.json
 .pixellab.env
+.aviso-local
 
 dados-compartilhados/
 *.sqlite
