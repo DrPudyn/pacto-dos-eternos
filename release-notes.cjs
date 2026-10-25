@@ -1,4 +1,8 @@
 module.exports=[
+ {at:'2026-10-25T19:30:00-03:00',title:'Link fixo para jogar online',items:[
+  'O Pacto dos Eternos agora tem um endereço fixo: https://elongated-handwrite-expose.ngrok-free.dev. Salve nos favoritos, ele não muda mais quando o servidor reinicia.',
+  'Na primeira visita aparece uma tela de aviso do ngrok; é só clicar em "Visit Site". Contas, progresso e os bots continuam os mesmos.'
+ ]},
  {at:'2026-10-25T11:30:00-03:00',title:'Ouro dobrado na Masmorra Livre',items:[
   'A quantidade de ouro recebida por mob foi dobrada em todos os castelos. Os bônus de progressão dos castelos, da variante de elite e do Códice continuam valendo.'
  ]},
