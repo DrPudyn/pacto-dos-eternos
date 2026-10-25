@@ -56,14 +56,14 @@ O `LEIA-ME.txt` registra que parte do cliente, imagens e sons veio dos arquivos 
 
 Conta confirmada nesta tarefa: **DrPudyn**.
 
-Destinos previstos para as cópias privadas:
+Repositórios criados e confirmados como privados em 25/10/2026:
 
 - Evidências Médicas: https://github.com/DrPudyn/evidencias-medicas
 - Pacto dos Eternos: https://github.com/DrPudyn/pacto-dos-eternos
 
 As cópias representam os arquivos atuais selecionados, com um novo histórico inicial de Git. Não incluem o histórico antigo, credenciais locais, bancos de usuários/jogadores, backups, logs, dependências instaladas ou estado das ferramentas. No jogo, os recursos preparados necessários ao cliente são preservados. No site, os builds e caches são regeneráveis e ficam fora do repositório.
 
-Este documento também acompanha os dois projetos como `CONTEXTO-DO-PROJETO.md`. A privacidade e o envio dos arquivos são verificados separadamente ao final da operação. Os projetos locais originais permanecem no local de trabalho existente.
+Este documento também acompanha os dois projetos como `CONTEXTO-DO-PROJETO.md`. A privacidade e os commits enviados foram confirmados pela API do GitHub. O teste existente de chat do jogo passou usando contas fictícias e dados temporários isolados. Não foi realizada uma nova validação completa do site ou de todas as funcionalidades do jogo nesta tarefa. Os projetos locais originais permanecem no local de trabalho existente.
 
 ## Princípios para as próximas etapas
 
