@@ -1,0 +1,33 @@
+minihero-offline/*.log
+dados-compartilhados/
+compartilhado*.log
+ferramentas/
+*.pid
+tunel*.log
+LINK PARA MEU IRMAO.txt
+backups/
+.pixellab-status.json
+.pixellab.env
+
+# Private runtime data and credentials
+.env*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+*.log
+*.pid
+*.sqlite*
+*.db
+*.pem
+*.key
+node_modules/
+.git/
+.openai/
+.sites-runtime/
+.wrangler/
+dados-compartilhados/
+backup-*/
+backups/
+ferramentas/
+.pixellab*
+LINK PARA *

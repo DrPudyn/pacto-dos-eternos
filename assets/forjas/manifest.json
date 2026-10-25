@@ -1,0 +1,164 @@
+[
+  {
+    "tier": 1,
+    "level": 1,
+    "file": "forge-1-lv1.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 1,
+    "level": 2,
+    "file": "forge-1-lv2.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 1,
+    "level": 3,
+    "file": "forge-1-lv3.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 2,
+    "level": 1,
+    "file": "forge-2-lv1.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 2,
+    "level": 2,
+    "file": "forge-2-lv2.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 2,
+    "level": 3,
+    "file": "forge-2-lv3.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 3,
+    "level": 1,
+    "file": "forge-3-lv1.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 3,
+    "level": 2,
+    "file": "forge-3-lv2.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 3,
+    "level": 3,
+    "file": "forge-3-lv3.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 4,
+    "level": 1,
+    "file": "forge-4-lv1.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 4,
+    "level": 2,
+    "file": "forge-4-lv2.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 4,
+    "level": 3,
+    "file": "forge-4-lv3.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 5,
+    "level": 1,
+    "file": "forge-5-lv1.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 5,
+    "level": 2,
+    "file": "forge-5-lv2.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 5,
+    "level": 3,
+    "file": "forge-5-lv3.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 6,
+    "level": 1,
+    "file": "forge-6-lv1.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 6,
+    "level": 2,
+    "file": "forge-6-lv2.png",
+    "size": [
+      192,
+      192
+    ]
+  },
+  {
+    "tier": 6,
+    "level": 3,
+    "file": "forge-6-lv3.png",
+    "size": [
+      192,
+      192
+    ]
+  }
+]

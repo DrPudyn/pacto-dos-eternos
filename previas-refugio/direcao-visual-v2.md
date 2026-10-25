@@ -1,0 +1,9 @@
+# Refúgio dos Eternos — Invocações
+
+Prévia editada com image_gen. Arquivo: refugio-dos-eternos-v2.png. Referências: prévia v1, assets/pact-book.png e assets/weapon-chest.png.
+
+Alteração solicitada: PACTOS vira INVOCAÇÕES; o altar central apresenta o grimório e uma caixa de equipamentos menores, lado a lado.
+
+## Prompt final
+
+Edit IMAGE 1, the complete pixel-art floating-city home-screen mockup. IMAGE 1 is the edit target. IMAGE 2 (blue-and-gold grimoire) and IMAGE 3 (blue-and-gold open equipment chest with weapons) are object-design references ONLY. Make ONLY these localized changes at the central circular altar: replace its existing nameplate text PACTOS with the exact Portuguese text INVOCAÇÕES (including Ç and Õ), same handsome gold lettering and dark blue/brass plaque, widening the plaque just enough if needed. Replace the one large floating book above this central altar with TWO SMALLER ICONS standing/floating SIDE BY SIDE: the grimoire from IMAGE 2 on the left and the equipment chest from IMAGE 3 on the right. Each should be roughly 55-60% the former book's height, so both fit comfortably in the same central altar space, visually balanced and clearly separated, neither overlaps the other or the label. Adapt their perspective and crisp pixel clusters to the scene, blue and gold materials, a restrained shared blue magical glow below and a few small gold pact symbols around them. Preserve the grimoire's book-and-four-pointed-star emblem and the chest's recognizable weapons. Leave the full scene layout, seven landmarks, all other labels, top bar, characters, buildings, bridges, crystal, chains, clouds, moon, lighting and bottom-left CÓDICE/MOCHILA shortcuts EXACTLY as in IMAGE 1. Do not redesign or recompose the city, do not move any other UI element, don't add additional text. Keep the same landscape aspect ratio and original pixel art style, no blur. Output the updated full screen mockup.

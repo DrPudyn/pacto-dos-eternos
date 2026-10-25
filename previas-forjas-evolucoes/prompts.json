@@ -1,0 +1,38 @@
+{
+  "tool": "image_gen built-in",
+  "status": "Previews only; not integrated game sprites",
+  "reference": "exec-879f981c-d597-4e40-b377-8549a21c55c9.png",
+  "direction": "Three static pixel-art mastery levels per forge, consistent design identity; dark navy comparison sheet. LV1 base, LV2 reinforcing details, LV3 special finish.",
+  "forges": [
+    {
+      "title": "FORJA APRENDIZ",
+      "ref": "TOP LEFT red brick oven",
+      "levels": "LV 1: the original humble rounded red brick furnace with crooked single chimney, gray stone arched firebox, little shovel and barrel. LV 2: SAME silhouette, add clean dark iron corner bands, repaired brighter bricks and small attached bellows. LV 3: SAME red brick oven, add bronze edge plates around the door, sturdy chimney cap, compact tool rack and hotter yellow-core orange fire. This remains visibly the humble cheapest furnace; no giant palace, gold ornament or magic."
+    },
+    {
+      "title": "FORJA DO FERRO",
+      "ref": "TOP CENTER round gray stone furnace with iron straps and bellows",
+      "levels": "LV 1: original squat round gray stone furnace, single broad chimney with glowing vents, iron straps, side leather bellows and anvil. LV 2: same building and footprint, thicker iron straps, larger bronze rivets, reinforced chimney collar, small pressure valve. LV 3: same silhouette with handsome dark steel plates around its opening, upgraded double bellows, bronze valve gauges, stronger bright orange fire. Industrial blacksmith craft, no magical features."
+    },
+    {
+      "title": "FORJA DOS ANÕES",
+      "ref": "TOP RIGHT angular bronze trimmed dwarven furnace with two chimneys",
+      "levels": "LV 1: original angular dark stone dwarven furnace, two equal tall chimneys, bronze angular arched doorway and geometric motifs. LV 2: same building, add bronze relief inlays, reinforced chimney bases, dwarven carved bands. LV 3: same footprint, rich bronze mechanical accents, large central engraved crest, upgraded ornate chimney caps, brighter amber fire. Clearly dwarven craftsmanship; no human faces or dragon."
+    },
+    {
+      "title": "FORJA RÚNICA",
+      "ref": "BOTTOM LEFT dark blue magical rune furnace with blue crystals",
+      "levels": "LV 1: original dark blue angular stone furnace, tall central rune chimney, blue fire and small side crystal fixtures. LV 2: same building, add a few new cyan runes on stone frames and faceted larger crystals on the existing pedestals. LV 3: same footprint, refined silver trim, glowing central diamond rune and more complete bright cyan inscriptions, enhanced blue-white fire. Keep calm, legible pixel-art luminosity, no huge floating particles or glowing haze."
+    },
+    {
+      "title": "FORJA DO VULCÃO",
+      "ref": "BOTTOM CENTER jagged black obsidian furnace with lava and chains",
+      "levels": "LV 1: original black obsidian furnace with jagged shoulders, central lava channel, orange firebox and iron chains. LV 2: same silhouette, add dark forged-metal reinforcements and widen existing lava cracks slightly, red-hot central diamond. LV 3: same core building, molten gold-orange veins integrated into the rock, heavier black iron trim and small lava reservoirs feeding existing side channels, very hot yellow-orange chamber. Lava remains controlled, no erupting volcano scene."
+    },
+    {
+      "title": "FORJA DO DRAGÃO",
+      "ref": "BOTTOM RIGHT charcoal dragon-headed furnace with gold-trimmed horns",
+      "levels": "LV 1: original impressive dragon-headed furnace, curved horns, charcoal stone, gold bands, mouth as firebox, two side lava towers. LV 2: same recognizable dragon furnace, richer layered gold cheek armor, reinforced horns and gold trim, more detailed side towers. LV 3: SAME silhouette and footprint, finest regal gold crown plate and horn rings, tasteful deep-red small gemstone inset in forehead armor, additional gold carved dragon scales, brightest fiery orange-yellow furnace mouth and enhanced controlled side lava channels. Most magnificent furnace, but NO living dragon, NO huge wings, NO red ruby eyes; keep eyes amber."
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+const assert=require('node:assert/strict'),{createEngine,createCampaignBattle}=require('./shared-engine.cjs'),cfg=require('./campaign-config.cjs');
+function farm(multiplier){const e=createEngine(null,{random:()=>.1}).engine,h={...e.player.heroes[0],id:1,atk:1000,atkSpd:100,dur:200,durability:1000,status:'working'};e.player.heroes=[h];e.player.porterOn=false;e.player.chest=0;e.player.campaignFarmMultiplier=multiplier;e.live.battle.heroes=[];const native=createCampaignBattle([h],cfg.stages[0],1).heroes[0].state;e.live.battle.addHero(native);e.live.startedAt=Date.now()-10000;e.advance();return e.player.chest;}
+const base=farm(1),boost=farm(1.3);assert(base>0);assert.equal(boost,Math.round(base*1.3));console.log('Farm gold actually credited:',base,'→',boost,'(×1.3)');

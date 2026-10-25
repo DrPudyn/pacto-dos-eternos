@@ -1,0 +1,5 @@
+from pathlib import Path
+p=Path('preparar-offline.cjs');s=p.read_text();s=s.replace("const fs=require('fs');","const fs=require('fs'),path=require('path');").replace("['minihero-offline/build','shared-build']","['minihero-offline/build','minihero-offline/shared-build']");p.write_text(s)
+p=Path('testar-castelos.cjs');s=p.read_text();s=s.replace("const normal={...battle.monsters[0],hp:1000", "hero.state.skin='swordsman';battle.monsters.forEach(m=>m.dead=true);const normal={...battle.monsters[0],role:'patrol',hp:1000");p.write_text(s)
+p=Path('campaign-tactics.js');s=p.read_text();s=s.replace("const safe=neighbors(n).filter(p=>!threatens(hazard,p));if(safe.length){h.path=[safe[0]];", "const queue=[{p:n,path:[]}],seen=new Set();let escape=null;while(queue.length){const at=queue.shift();if(at.path.length&&!threatens(hazard,at.p)){escape=at.path;break;}if(at.path.length>=8)continue;for(const p of neighbors(at.p)){const key=p.x+','+p.y;if(seen.has(key))continue;seen.add(key);queue.push({p,path:[...at.path,p]});}}if(escape){h.path=escape;")
+p.write_text(s)

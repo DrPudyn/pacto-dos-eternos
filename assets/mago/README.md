@@ -1,0 +1,4 @@
+# Mago jogável
+Arte criada com imagegen integrado (fundo transparente), adaptada em folhas de 512x128, 16 quadros e 4 direções para idle, walk e attack. Atlas original preservado nesta pasta. Conversão de grade/tamanho em preparar-sprites.py.
+Prompt: production pixel-art sprite atlas, generic purple wizard, pointed hat, gold trim, brown staff and violet crystal; transparent background; strict 16-column/12-row grid; four diagonal directions for idle, walking and casting loops; no labels or borders; consistent character, top-down RPG.
+Balanceamento: mesmas distribuições de ATK, ATK SPD, DUR e skills por raridade; alcance 3 como arqueiro, projétil arcano; janela mínima de animação 0.72s como arqueiro, sem bônus de dano/área. Classe sorteada uniformemente entre quatro classes. Raridades preservadas. Heróis existentes permanecem como estavam.

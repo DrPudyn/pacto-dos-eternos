@@ -1,0 +1,8 @@
+const fs=require('fs'),path=require('path'),crypto=require('crypto'),{DatabaseSync}=require('node:sqlite');
+const dir=path.join(__dirname,'dados-compartilhados'),sql=new DatabaseSync(path.join(dir,'jogadores.sqlite'));
+try{const row=sql.prepare('SELECT * FROM game_state WHERE singleton=1').get();if(!row)throw Error('Save indisponível');const hash=s=>crypto.createHash('sha256').update(s).digest('hex');if(hash(row.payload)!==row.hash)throw Error('Integridade inválida');const db=JSON.parse(row.payload),users=db.users.filter(u=>u.name==='JUKA');if(users.length!==1)throw Error('Conta ausente ou ambígua');const user=users[0],rules=require('./creature-codex.cjs');
+fs.writeFileSync(path.join(dir,'backup-antes-liberar-trono-codice-'+Date.now()+'.json'),row.payload,{flag:'wx'});
+for(let variant=0;variant<5;variant++)rules.discover(user,9,variant);
+const text=JSON.stringify(db);sql.exec('BEGIN IMMEDIATE');try{const result=sql.prepare('UPDATE game_state SET payload=?,hash=?,previous_hash=?,version=version+1 WHERE singleton=1 AND version=?').run(text,hash(text),row.hash,row.version);if(result.changes!==1)throw Error('Save mudou durante a operação');sql.exec('COMMIT');}catch(e){sql.exec('ROLLBACK');throw e;}
+fs.writeFileSync(path.join(dir,'jogadores.json'),text);const verified=JSON.parse(sql.prepare('SELECT payload FROM game_state WHERE singleton=1').get().payload).users.find(u=>u.name==='JUKA');if(![0,1,2,3,4].every(v=>verified.creatureCodex.discovered['9:'+v]))throw Error('Descobertas não confirmadas');console.log('JUKA: cinco descobertas do Trono liberadas. Registros e ativação preservados. Backup salvo.');
+}finally{sql.close();}

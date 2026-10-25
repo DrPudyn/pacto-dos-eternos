@@ -1,0 +1,7 @@
+.mh-assistant-sprite{display:inline-block;flex-shrink:0;width:180px;height:217px;background:url('./ajudante-personagem.png') -67.2px 0/868.8px 651.6px no-repeat;image-rendering:pixelated;animation:mh-assistant-idle 3.2s steps(1,end) infinite;vertical-align:middle}
+.shortcut-porter.mh-assistant-sprite,.market-porter-face.mh-assistant-sprite{zoom:.25}
+.buy-art-porter .mh-assistant-sprite{zoom:.7}.art-porter .mh-assistant-sprite{zoom:1.05}
+.porter-art .mh-assistant-sprite{zoom:1.1}.unit-art .mh-assistant-sprite{zoom:1}
+@keyframes mh-assistant-idle{0%,42%,100%{background-position-x:-67.2px}45%,49%{background-position-x:-247.2px}52%,89%{background-position-x:-427.2px}92%,96%{background-position-x:-607.2px}}
+@media(prefers-reduced-motion:reduce){.mh-assistant-sprite{animation:none}}
+.mh-assistant-sprite{background-image:url('./forge-ui-atlas.png');background-size:300% 100%;background-position:0 50%;width:180px;height:180px;animation:lumina-hover 3s ease-in-out infinite}@keyframes lumina-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}@media(prefers-reduced-motion:reduce){.mh-assistant-sprite{animation:none}}

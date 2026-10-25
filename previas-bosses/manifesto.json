@@ -1,0 +1,50 @@
+[
+  {
+    "id": "rei-esqueleto",
+    "name": "Rei Esqueleto",
+    "note": "Coroa quebrada e olhos azuis",
+    "path": "C:\\Users\\edson\\.codex\\generated_images\\01a14b48-d2aa-76a0-9430-e3e064dee149\\exec-6871b9fa-6928-4366-928f-8e841bafd80f.png",
+    "prompt": "Game sprite sheet of ONE original fantasy boss: Skeleton King, ivory skeleton with broken gold crown, blue glowing eyes and huge chipped sword. EXACTLY ONE HORIZONTAL ROW OF EIGHT equally spaced animation frames, no other rows. Transparent background. Each cell square, same character scale and planted baseline. Extremely low resolution chunky pixel art, logical 48x48 pixels per frame, designed to downsample to 48x48. Dark one pixel outline, limited palette, no antialias, no gradients. Three-quarter low top-down facing southeast, retro dungeon RPG style matching tiny original dungeon enemies. Full body fits with 4 pixel margins. Eight frames of smooth idle IN PLACE looping: breathing, head bob, torso sway, tiny limb motions; first and last nearly identical. Do not walk or move across frame. Same anatomy, clothing, colors, silhouette and framing throughout. No letters, no text, no panels, no grid, no scenery, no shadows, no floor. Sheet canvas wide horizontal strip, intended 1024x128.",
+    "tool": "imagegen integrado"
+  },
+  {
+    "id": "golem-forja",
+    "name": "Golem da Forja",
+    "note": "Núcleo e fissuras de lava",
+    "path": "C:\\Users\\edson\\.codex\\generated_images\\01a14b48-d2aa-76a0-9430-e3e064dee149\\exec-1f6a0edd-cfda-4a00-b808-63c85a8da86f.png",
+    "prompt": "Game sprite sheet of ONE original fantasy boss: Forge Golem, bulky dark charcoal rock body, sparse orange lava cracks and glowing furnace core in chest, massive rocky fists. EXACTLY ONE HORIZONTAL ROW OF EIGHT equally spaced animation frames, no other rows. Transparent background. Each cell square, same character scale and planted baseline. Extremely low resolution chunky pixel art, logical 48x48 pixels per frame, designed to downsample to 48x48. Dark one pixel outline, limited palette, no antialias, no gradients. Three-quarter low top-down facing southeast, retro dungeon RPG style matching tiny original dungeon enemies. Full body fits with 4 pixel margins. Eight frames of smooth idle IN PLACE looping: breathing, head bob, torso sway, tiny limb motions; first and last nearly identical. Do not walk or move across frame. Same anatomy, clothing, colors, silhouette and framing throughout. No letters, no text, no panels, no grid, no scenery, no shadows, no floor. Sheet canvas wide horizontal strip, intended 1024x128.",
+    "tool": "imagegen integrado"
+  },
+  {
+    "id": "aranha-rainha",
+    "name": "Aranha Rainha",
+    "note": "Patas e abdômen pulsando",
+    "path": "C:\\Users\\edson\\.codex\\generated_images\\01a14b48-d2aa-76a0-9430-e3e064dee149\\exec-c5f0f5a1-8853-47d4-8a33-84f5ca32f031.png",
+    "prompt": "Game sprite sheet of ONE original fantasy boss: Spider Queen, eight articulated black legs, large violet abdomen, violet markings and ivory fangs, menacing cute readable silhouette. EXACTLY ONE HORIZONTAL ROW OF EIGHT equally spaced animation frames, no other rows. Transparent background. Each cell square, same character scale and planted baseline. Extremely low resolution chunky pixel art, logical 48x48 pixels per frame, designed to downsample to 48x48. Dark one pixel outline, limited palette, no antialias, no gradients. Three-quarter low top-down facing southeast, retro dungeon RPG style matching tiny original dungeon enemies. Full body fits with 4 pixel margins. Eight frames of smooth idle IN PLACE looping: breathing, head bob, torso sway, tiny limb motions; first and last nearly identical. Do not walk or move across frame. Same anatomy, clothing, colors, silhouette and framing throughout. No letters, no text, no panels, no grid, no scenery, no shadows, no floor. Sheet canvas wide horizontal strip, intended 1024x128.",
+    "tool": "imagegen integrado"
+  },
+  {
+    "id": "dragao",
+    "name": "Dragão Esmeralda",
+    "note": "Respiração, asas e cauda",
+    "path": "C:\\Users\\edson\\.codex\\generated_images\\01a14b48-d2aa-76a0-9430-e3e064dee149\\exec-533c2ad0-914e-48f9-af7a-ed69bee771a1.png",
+    "prompt": "Game sprite sheet of ONE original fantasy boss: Small ancient dragon boss, emerald scales, short horns, folded wings, orange eyes, curled tail, no flight. EXACTLY ONE HORIZONTAL ROW OF EIGHT equally spaced animation frames, no other rows. Transparent background. Each cell square, same character scale and planted baseline. Extremely low resolution chunky pixel art, logical 48x48 pixels per frame, designed to downsample to 48x48. Dark one pixel outline, limited palette, no antialias, no gradients. Three-quarter low top-down facing southeast, retro dungeon RPG style matching tiny original dungeon enemies. Full body fits with 4 pixel margins. Eight frames of smooth idle IN PLACE looping: breathing, head bob, torso sway, tiny limb motions; first and last nearly identical. Do not walk or move across frame. Same anatomy, clothing, colors, silhouette and framing throughout. No letters, no text, no panels, no grid, no scenery, no shadows, no floor. Sheet canvas wide horizontal strip, intended 1024x128.",
+    "tool": "imagegen integrado"
+  },
+  {
+    "id": "necromante",
+    "name": "Necromante",
+    "note": "Flutuação e chama espectral",
+    "path": "C:\\Users\\edson\\.codex\\generated_images\\01a14b48-d2aa-76a0-9430-e3e064dee149\\exec-fb5088f7-eced-4b2f-9350-b016565a2519.png",
+    "prompt": "Game sprite sheet of ONE original fantasy boss: Necromancer, hooded purple tattered robe, face in shadow with mint glowing eyes, bone staff and small green flame, levitating slightly. EXACTLY ONE HORIZONTAL ROW OF EIGHT equally spaced animation frames, no other rows. Transparent background. Each cell square, same character scale and planted baseline. Extremely low resolution chunky pixel art, logical 48x48 pixels per frame, designed to downsample to 48x48. Dark one pixel outline, limited palette, no antialias, no gradients. Three-quarter low top-down facing southeast, retro dungeon RPG style matching tiny original dungeon enemies. Full body fits with 4 pixel margins. Eight frames of smooth idle IN PLACE looping: breathing, head bob, torso sway, tiny limb motions; first and last nearly identical. Do not walk or move across frame. Same anatomy, clothing, colors, silhouette and framing throughout. No letters, no text, no panels, no grid, no scenery, no shadows, no floor. Sheet canvas wide horizontal strip, intended 1024x128.",
+    "tool": "imagegen integrado"
+  },
+  {
+    "id": "lobisomem-ancestral",
+    "name": "Lobisomem Ancestral",
+    "note": "Respiração e postura feroz",
+    "path": "C:\\Users\\edson\\.codex\\generated_images\\01a14b48-d2aa-76a0-9430-e3e064dee149\\exec-b7595773-1be2-41fb-b433-474345e164fd.png",
+    "prompt": "Game sprite sheet of ONE original fantasy boss: Ancestral Werewolf, hulking silver-grey wolf humanoid, shaggy mane, muscular arms, long claws and amber eyes, feral hunched posture. EXACTLY ONE HORIZONTAL ROW OF EIGHT equally spaced animation frames, no other rows. Transparent background. Each cell square, same character scale and planted baseline. Extremely low resolution chunky pixel art, logical 48x48 pixels per frame, designed to downsample to 48x48. Dark one pixel outline, limited palette, no antialias, no gradients. Three-quarter low top-down facing southeast, retro dungeon RPG style matching tiny original dungeon enemies. Full body fits with 4 pixel margins. Eight frames of smooth idle IN PLACE looping: breathing, head bob, torso sway, tiny limb motions; first and last nearly identical. Do not walk or move across frame. Same anatomy, clothing, colors, silhouette and framing throughout. No letters, no text, no panels, no grid, no scenery, no shadows, no floor. Sheet canvas wide horizontal strip, intended 1024x128.",
+    "tool": "imagegen integrado"
+  }
+]

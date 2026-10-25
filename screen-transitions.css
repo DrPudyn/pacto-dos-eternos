@@ -1,0 +1,1 @@
+.game-navigation-fade{position:fixed;inset:44px 0 0;z-index:2000;background:#050b16;opacity:0;pointer-events:auto;transition:opacity .14s ease-in-out}.game-navigation-fade.covered{opacity:1}.game-navigation-fade:not(.covered){transition-duration:.19s}@media(prefers-reduced-motion:reduce){.game-navigation-fade{transition:none}}

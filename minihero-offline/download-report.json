@@ -1,0 +1,739 @@
+{
+  "files": [
+    "build/../assets/audio/music/action-1.mp3",
+    "build/../assets/audio/music/action-2.mp3",
+    "build/../assets/audio/music/action-3.mp3",
+    "build/../assets/audio/music/action-4.mp3",
+    "build/../assets/audio/music/action-5.mp3",
+    "build/../assets/audio/music/goblins-dance.mp3",
+    "build/../assets/audio/music/goblins-den.mp3",
+    "build/../assets/audio/music/light-ambient-1.mp3",
+    "build/../assets/audio/music/light-ambient-2.mp3",
+    "build/../assets/audio/music/light-ambient-3.mp3",
+    "build/../assets/audio/music/light-ambient-4.mp3",
+    "build/../assets/audio/music/light-ambient-5.mp3",
+    "build/../assets/audio/sfx/anvil-1.mp3",
+    "build/../assets/audio/sfx/anvil-2.mp3",
+    "build/../assets/audio/sfx/aoe-fire-1.mp3",
+    "build/../assets/audio/sfx/aoe-ice-1.mp3",
+    "build/../assets/audio/sfx/aoe-lightning-1.mp3",
+    "build/../assets/audio/sfx/biome-1.mp3",
+    "build/../assets/audio/sfx/boss-appear-1.mp3",
+    "build/../assets/audio/sfx/boss-down-1.mp3",
+    "build/../assets/audio/sfx/bow-1.mp3",
+    "build/../assets/audio/sfx/bow-2.mp3",
+    "build/../assets/audio/sfx/bow-3.mp3",
+    "build/../assets/audio/sfx/bow-4.mp3",
+    "build/../assets/audio/sfx/break-1.mp3",
+    "build/../assets/audio/sfx/card-1.mp3",
+    "build/../assets/audio/sfx/card-fly-1.mp3",
+    "build/../assets/audio/sfx/card-fly-2.mp3",
+    "build/../assets/audio/sfx/card-fly-3.mp3",
+    "build/../assets/audio/sfx/charge-1.mp3",
+    "build/../assets/audio/sfx/chest-close-1.mp3",
+    "build/../assets/audio/sfx/chest-close-2.mp3",
+    "build/../assets/audio/sfx/chest-open-1.mp3",
+    "build/../assets/audio/sfx/chest-open-2.mp3",
+    "build/../assets/audio/sfx/click-1.mp3",
+    "build/../assets/audio/sfx/click-2.mp3",
+    "build/../assets/audio/sfx/coin-1.mp3",
+    "build/../assets/audio/sfx/coin-2.mp3",
+    "build/../assets/audio/sfx/coins-1.mp3",
+    "build/../assets/audio/sfx/complete-1.mp3",
+    "build/../assets/audio/sfx/crit-1.mp3",
+    "build/../assets/audio/sfx/crit-2.mp3",
+    "build/../assets/audio/sfx/crit-3.mp3",
+    "build/../assets/audio/sfx/envelope-1.mp3",
+    "build/../assets/audio/sfx/envelope-open-1.mp3",
+    "build/../assets/audio/sfx/envelope-shake-1.mp3",
+    "build/../assets/audio/sfx/envelope-shake-2.mp3",
+    "build/../assets/audio/sfx/equip-1.mp3",
+    "build/../assets/audio/sfx/error-1.mp3",
+    "build/../assets/audio/sfx/flip-1.mp3",
+    "build/../assets/audio/sfx/flip-2.mp3",
+    "build/../assets/audio/sfx/flip-3.mp3",
+    "build/../assets/audio/sfx/hit-arrow-1.mp3",
+    "build/../assets/audio/sfx/hit-arrow-2.mp3",
+    "build/../assets/audio/sfx/hit-spear-1.mp3",
+    "build/../assets/audio/sfx/hit-spear-2.mp3",
+    "build/../assets/audio/sfx/hit-spear-3.mp3",
+    "build/../assets/audio/sfx/hit-sword-1.mp3",
+    "build/../assets/audio/sfx/hit-sword-2.mp3",
+    "build/../assets/audio/sfx/hit-sword-3.mp3",
+    "build/../assets/audio/sfx/kill-orc-1.mp3",
+    "build/../assets/audio/sfx/kill-orc-2.mp3",
+    "build/../assets/audio/sfx/kill-orc-3.mp3",
+    "build/../assets/audio/sfx/kill-slime-1.mp3",
+    "build/../assets/audio/sfx/kill-slime-2.mp3",
+    "build/../assets/audio/sfx/page-1.mp3",
+    "build/../assets/audio/sfx/paper-1.mp3",
+    "build/../assets/audio/sfx/paper-2.mp3",
+    "build/../assets/audio/sfx/purchase-1.mp3",
+    "build/../assets/audio/sfx/quake-1.mp3",
+    "build/../assets/audio/sfx/reveal-0-1.mp3",
+    "build/../assets/audio/sfx/reveal-1-1.mp3",
+    "build/../assets/audio/sfx/reveal-2-1.mp3",
+    "build/../assets/audio/sfx/reveal-3-1.mp3",
+    "build/../assets/audio/sfx/reveal-4-1.mp3",
+    "build/../assets/audio/sfx/sack-1.mp3",
+    "build/../assets/audio/sfx/sack-2.mp3",
+    "build/../assets/audio/sfx/stall-1.mp3",
+    "build/../assets/audio/sfx/step-1.mp3",
+    "build/../assets/audio/sfx/unequip-1.mp3",
+    "build/../assets/audio/sfx/victory-1.mp3",
+    "build/Cache-BO5uoly3.js",
+    "build/CanvasPool-ddESjdwZ.js",
+    "build/Filter-jshp6xhL.js",
+    "build/GCManagedHash-Q2tSArc7.js",
+    "build/GraphicsContext-fUWEq8FL.js",
+    "build/RenderTargetSystem-Uz8mP4By.js",
+    "build/action-1-BpP1QQjz.mp3",
+    "build/action-2-2KXqiyJh.mp3",
+    "build/action-3-D1RidMci.mp3",
+    "build/action-4-BsxF5F8R.mp3",
+    "build/action-5-DNDLfz_F.mp3",
+    "build/anvil-1-J4zlZtOs.mp3",
+    "build/anvil-2-BgykR9bi.mp3",
+    "build/aoe-fire-1-Dy8bSexT.mp3",
+    "build/aoe-ice-1-DEpac0KU.mp3",
+    "build/aoe-lightning-1-PdwdPu3L.mp3",
+    "build/app-0-_Askj9.js",
+    "build/app-CDDfXXhg.css",
+    "build/archer-attack-ClxIWz7r.png",
+    "build/archer-idle-P3SxISc4.png",
+    "build/archer-walk-BSlfYEZv.png",
+    "build/arrow-B05uxcb1.png",
+    "build/arrow-impact-BOfuEIDd.png",
+    "build/bat-damage-B2RWZml4.png",
+    "build/bat-die-DRiaUmUp.png",
+    "build/bat-idle-hFetTYWt.png",
+    "build/biome-1-DHYT-wSg.mp3",
+    "build/blacksmith-working-BLLtgXZd.png",
+    "build/bluemother-damage-BtqTWVKD.png",
+    "build/bluemother-die-CdQZ6t_L.png",
+    "build/bluemother-idle-KPBBWQjD.png",
+    "build/blueslime-damage-CEIz1ALq.png",
+    "build/blueslime-die-DAsnlKTP.png",
+    "build/blueslime-idle-DMCheSOR.png",
+    "build/boss-appear-1-CaC8ExVI.mp3",
+    "build/boss-down-1-D08C1rFL.mp3",
+    "build/bow-1-DMc1r2Qq.mp3",
+    "build/bow-2-DNUGxcN4.mp3",
+    "build/bow-3-GTa8xgQO.mp3",
+    "build/bow-4-D5evA_E2.mp3",
+    "build/break-1-DIgR4GSb.mp3",
+    "build/browserAll-ComkaKFs.js",
+    "build/burst-electric-DFN8AAA5.png",
+    "build/burst-fire-wOmfQT9k.png",
+    "build/burst-ice-Bc_jebZK.png",
+    "build/canvasUtils-BPAiyt2y.js",
+    "build/card-1-vD1uuqdu.mp3",
+    "build/card-back-Caxfdi_B.png",
+    "build/card-fly-1-GigxUc7O.mp3",
+    "build/card-fly-2-bWrAYNG-.mp3",
+    "build/card-fly-3-a41esI_S.mp3",
+    "build/card-gloss-DImmJuzt.png",
+    "build/card-holo-BLbwo7sx.png",
+    "build/card-holo-anim-BSw-KI8q.png",
+    "build/centaur-damage-kDB9VPJ-.png",
+    "build/centaur-die-g9nkgBky.png",
+    "build/centaur-idle-kSuyDUDH.png",
+    "build/centaurking-damage-3v0-5x7b.png",
+    "build/centaurking-die-Y7DqXlF7.png",
+    "build/centaurking-idle-D0vUqVHV.png",
+    "build/charge-1-NnCHwdO0.mp3",
+    "build/chest-close-1-BDXJh-Cy.mp3",
+    "build/chest-close-2-C9bU_XPd.mp3",
+    "build/chest-closed-D8e7-pXi.png",
+    "build/chest-open-1-ZykEjt1V.mp3",
+    "build/chest-open-2-ChXDhGJ0.mp3",
+    "build/chest-open-BgEloEnK.png",
+    "build/click-1-BiockfBy.mp3",
+    "build/click-2-DrDcBfG8.mp3",
+    "build/coin-1-Dr8RSVAm.mp3",
+    "build/coin-2-OXnv7rfE.mp3",
+    "build/coins-1-wODDjtCb.mp3",
+    "build/complete-1-BLpBjHVF.mp3",
+    "build/crit-1-DXV02BdH.mp3",
+    "build/crit-2-Bd-52PJd.mp3",
+    "build/crit-3-erFUoz3Y.mp3",
+    "build/cyclop-damage-CAUfdZPG.png",
+    "build/cyclop-die-DnM-W4Bv.png",
+    "build/cyclop-idle-DjDj3UGc.png",
+    "build/deepone-damage-Deecf8Mj.png",
+    "build/deepone-die-C722l3Mw.png",
+    "build/deepone-idle-BcC6VfZz.png",
+    "build/earth-impact-DlJQeksM.png",
+    "build/envelope-1-BffIWjEM.mp3",
+    "build/envelope-open-1-DRZxfRFM.mp3",
+    "build/envelope-shake-1-D-uZ7oCh.mp3",
+    "build/envelope-shake-2-KQEg2A0j.mp3",
+    "build/equip-1-37Fz-Hh4.mp3",
+    "build/error-1-DatwJlk4.mp3",
+    "build/esm-CX-u0NHB.js",
+    "build/fire-impact-DF08O70a.png",
+    "build/flip-1-Bu-sUQk9.mp3",
+    "build/flip-2-CqtjB2TH.mp3",
+    "build/flip-3-e8kYk5nl.mp3",
+    "build/forge-entrance-CysMN1Yy.png",
+    "build/gargoyle-damage-BWV1SHMN.png",
+    "build/gargoyle-die-06gvXt4D.png",
+    "build/gargoyle-idle-9qCneA0Y.png",
+    "build/getTexelRangeRects-Bz7fxRTR.js",
+    "build/getTextureBatchBindGroup-xnHymJtJ.js",
+    "build/giant-damage-m73NJLkk.png",
+    "build/giant-die-CQhs50MX.png",
+    "build/giant-idle-D0NLYy6t.png",
+    "build/gnoll-damage-BQ5MWBUM.png",
+    "build/gnoll-die-D4d_BFgO.png",
+    "build/gnoll-idle-DlhJl1XC.png",
+    "build/goblin-damage-Dv_r_hgU.png",
+    "build/goblin-die-D2_9i_9V.png",
+    "build/goblin-idle-DI_1ex45.png",
+    "build/goblins-dance-M3BuayTS.mp3",
+    "build/goblins-den-DhhRbh1f.mp3",
+    "build/gold-pile-CSyEOXcy.png",
+    "build/greenmother-damage-DySGoipo.png",
+    "build/greenmother-die-VFWvOB5M.png",
+    "build/greenmother-idle-DbMoVT9F.png",
+    "build/heroes/swordsman-idle.png",
+    "build/hit-arrow-1-DopUClSd.mp3",
+    "build/hit-arrow-2-Bbwt7iis.mp3",
+    "build/hit-spear-1-D0hCtl2v.mp3",
+    "build/hit-spear-2-B8Jp_Ito.mp3",
+    "build/hit-spear-3-TBlWG415.mp3",
+    "build/hit-sword-1-DAk_705-.mp3",
+    "build/hit-sword-2-DqXYwUE8.mp3",
+    "build/hit-sword-3-0fsOXhgN.mp3",
+    "build/ice-impact-DkUdH8AU.png",
+    "build/icon-192.png",
+    "build/image.png",
+    "build/index.browser--XielK_G.js",
+    "build/index.browser-CAHQCCis.js",
+    "build/init-CPa0C8HK.js",
+    "build/jersey-10-DrL73VYW.woff2",
+    "build/kill-orc-1-DzIpXYOt.mp3",
+    "build/kill-orc-2-itVfPVT5.mp3",
+    "build/kill-orc-3-DqiYN-Yq.mp3",
+    "build/kill-slime-1-BHm7tbJj.mp3",
+    "build/kill-slime-2-DzB1OMay.mp3",
+    "build/light-ambient-1-1R9zCUdZ.mp3",
+    "build/light-ambient-2-D2wdGDKX.mp3",
+    "build/light-ambient-3-03Rga-xN.mp3",
+    "build/light-ambient-4-CNemSNdJ.mp3",
+    "build/light-ambient-5-BdCRSAbB.mp3",
+    "build/mage-earth-casting-CG3scMLB.png",
+    "build/mage-earth-holding-Bh1qaziD.png",
+    "build/mage-earth-throwing-C-uefUql.png",
+    "build/mage-fire-casting-NmDwcXev.png",
+    "build/mage-fire-holding-e4ZbPrNw.png",
+    "build/mage-fire-throwing-CK4FVmhH.png",
+    "build/mage-ice-casting-TwBRLRDI.png",
+    "build/mage-ice-holding-CIDyyOui.png",
+    "build/mage-ice-throwing-CGJrYUNw.png",
+    "build/mage-wind-casting-DdPRvjbm.png",
+    "build/mage-wind-holding-CZcJTYRL.png",
+    "build/mage-wind-throwing-BidGI5ZL.png",
+    "build/merchant-xEPUzTvq.png",
+    "build/mhdg-O4gnYhz5.png",
+    "build/mimic-damage-BfW1YFyt.png",
+    "build/mimic-die-D-ti2cPQ.png",
+    "build/mimic-idle-DTRWmZYo.png",
+    "build/minotaur-damage-BvWxR6L-.png",
+    "build/minotaur-die-Ds1WCDrk.png",
+    "build/minotaur-idle-DGQ-btHr.png",
+    "build/monsters/minotaur-idle.png",
+    "build/mushroom-damage-BwEGbxHf.png",
+    "build/mushroom-die-CsYV7ygo.png",
+    "build/mushroom-idle-BrHqkzBm.png",
+    "build/orc-damage-CzftMhYZ.png",
+    "build/orc-die-Ccpvk2hR.png",
+    "build/orc-idle-BlAC89q4.png",
+    "build/page-1-CapK1L23.mp3",
+    "build/paper-1-C4YtiQV1.mp3",
+    "build/paper-2-BrjhBHDJ.mp3",
+    "build/pixelify-sans-Cbhn5ptY.woff2",
+    "build/porter-Zr4TZWZB.png",
+    "build/porter-loop-CBf7vovE.png",
+    "build/prop-shadows-D44111pD.png",
+    "build/props-DRVzm3-F.png",
+    "build/pumpkin-damage-Bedtoek4.png",
+    "build/pumpkin-die-BN7nmEEU.png",
+    "build/pumpkin-idle-C-KsyMYp.png",
+    "build/purchase-1-WlXw_vaj.mp3",
+    "build/quake-1-Bh8zxYmq.mp3",
+    "build/rarity-frames-BdP1Q6FJ.png",
+    "build/rat-damage-xyYv362S.png",
+    "build/rat-die-B_XHkhhH.png",
+    "build/rat-idle-B5vjKP21.png",
+    "build/ratking-damage-BZpZUrM2.png",
+    "build/ratking-die-4B7xlYHI.png",
+    "build/ratking-idle-CH7rmPuO.png",
+    "build/ratman-damage-BR9kyPDj.png",
+    "build/ratman-die-CtgI5DuU.png",
+    "build/ratman-idle-BZOK8M7t.png",
+    "build/reaper-damage-TR_3JbYx.png",
+    "build/reaper-die-DPuiHDH9.png",
+    "build/reaper-idle-CSMp8YKK.png",
+    "build/reveal-0-1-Vb0ITDq3.mp3",
+    "build/reveal-1-1-BjoTdmuv.mp3",
+    "build/reveal-2-1-y3eE60Dk.mp3",
+    "build/reveal-3-1-CDeoBXoF.mp3",
+    "build/reveal-4-1-CwlAk1cG.mp3",
+    "build/rolldown-runtime-hePW80VL.js",
+    "build/sack-1-CCcsBMgg.mp3",
+    "build/sack-2-CHYHS8D3.mp3",
+    "build/session-1XYmAd2G.js",
+    "build/shymimic-damage-DmOET6eZ.png",
+    "build/shymimic-die-m5brBVVi.png",
+    "build/shymimic-idle-CAbEcxWM.png",
+    "build/skeleton-damage-DjeNmhXO.png",
+    "build/skeleton-die-ldHBhM9m.png",
+    "build/skeleton-idle-poWSJqXr.png",
+    "build/skills-5c4BU85W.png",
+    "build/slayer-damage-D6Ps-Us7.png",
+    "build/slayer-die-KvPaGk-g.png",
+    "build/slayer-idle-tPOnpiR6.png",
+    "build/slime-damage-D2JW2KMD.png",
+    "build/slime-die-C5npRY63.png",
+    "build/slime-idle-BGYzMBfI.png",
+    "build/snowman-idle-DkskF_EB.png",
+    "build/spearman-attack-C3GjcOso.png",
+    "build/spearman-idle-CJGk46vT.png",
+    "build/spearman-walk-BS5M27-3.png",
+    "build/spider-damage-eURN_UkN.png",
+    "build/spider-die-BY_Tw8_z.png",
+    "build/spider-idle-DURoRNok.png",
+    "build/stall-1-DbvwsMdC.mp3",
+    "build/step-1-CYflM755.mp3",
+    "build/summon-cards-DDT6PKDG.png",
+    "build/summon-envelope-qho0OU7J.png",
+    "build/swordsman-attack-dbN_R6X3.png",
+    "build/swordsman-idle-BZoYeDgg.png",
+    "build/swordsman-walk-DMJTpNDL.png",
+    "build/tile-shadows-BcGouTth.png",
+    "build/tileset-rW6EFQBw.png",
+    "build/torch-CA41Xmn1.png",
+    "build/torch-light-CcuYbsyA.png",
+    "build/trasgo-damage-Sn-5RNN4.png",
+    "build/trasgo-die-B8vBIsos.png",
+    "build/trasgo-idle-DRN2Uf9-.png",
+    "build/troll-damage-D3nPMuI-.png",
+    "build/troll-die-BzGam14s.png",
+    "build/troll-idle-Bzj3RPUo.png",
+    "build/ui/card-back.png",
+    "build/ui/chest-closed.png",
+    "build/ui/forge-entrance.png",
+    "build/ui/gold-pile.png",
+    "build/ui/merchant.png",
+    "build/ui/mhdg.png",
+    "build/ui/porter.png",
+    "build/ui/summon-cards.png",
+    "build/unequip-1-CevLRZo9.mp3",
+    "build/victory-1-BPCR-AKV.mp3",
+    "build/warg-damage-Cx0KHk9m.png",
+    "build/warg-die-BOLwazuw.png",
+    "build/warg-idle-CA1afmtf.png",
+    "build/webworkerAll-OmmPHVta.js",
+    "build/werewolf-damage-DYG33jiD.png",
+    "build/werewolf-die-I6rU7Xgo.png",
+    "build/werewolf-idle-pDzLHTPV.png",
+    "build/werewolfman-damage-BYV2alm6.png",
+    "build/werewolfman-die-Cpb81CCg.png",
+    "build/werewolfman-idle-BhRzcDyS.png",
+    "build/wildfire-damage-VWYe3rPt.png",
+    "build/wildfire-die-DFSmBOle.png",
+    "build/wildfire-idle-B9jLU65o.png",
+    "build/wildorc-damage-7LV-gLiJ.png",
+    "build/wildorc-die-FmxJmg9K.png",
+    "build/wildorc-idle-CcWfT1DE.png",
+    "build/wind-impact-wuYpX7Ki.png",
+    "build/wolf-damage-BbJqCn4t.png",
+    "build/wolf-die-DNwg033M.png",
+    "build/wolf-idle-DQ8kllyk.png",
+    "build/yeti-damage-Cs8NZzzY.png",
+    "build/yeti-die-DiROlF1m.png",
+    "build/yeti-idle-Dbw-yKZ4.png",
+    "build/zombie-damage-d2Bf_zaM.png",
+    "build/zombie-die-BHFxHTvn.png",
+    "build/zombie-idle-BB8yAnxg.png",
+    "icon-192.png",
+    "icon-512.png",
+    "index.html",
+    "manifest.webmanifest"
+  ],
+  "errors": [
+    [
+      "build/../assets/audio/sfx/bow-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-spear-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/coin-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/bow-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/chest-close-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-sword-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/goblins-den.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/charge-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/chest-closed.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/music/goblins-dance.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/crit-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/coins-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/crit-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/break-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/click-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/icon-192.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/anvil-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/action-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/chest-open-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/chest-close-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/flip-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/kill-orc-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/reveal-1-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/paper-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-arrow-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/reveal-2-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/merchant.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/quake-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/light-ambient-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/card-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/flip-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/kill-slime-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/victory-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/porter.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/music/light-ambient-5.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-sword-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/card-fly-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/biome-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/light-ambient-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/envelope-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/mhdg.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/kill-slime-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/reveal-4-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/heroes/swordsman-idle.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-arrow-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-sword-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/image.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-spear-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/action-5.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/kill-orc-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/card-fly-3.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/boss-down-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/complete-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/kill-orc-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/anvil-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/boss-appear-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/bow-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/envelope-shake-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/summon-cards.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/envelope-shake-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/aoe-lightning-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/step-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/envelope-open-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/aoe-fire-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/reveal-0-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/stall-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/gold-pile.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/crit-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/coin-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/aoe-ice-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/hit-spear-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/bow-4.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/action-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/chest-open-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/reveal-3-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/flip-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/light-ambient-4.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/action-4.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/page-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/action-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/click-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/equip-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/music/light-ambient-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/forge-entrance.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/card-fly-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/sack-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/error-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/monsters/minotaur-idle.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/sack-2.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/purchase-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/ui/card-back.png",
+      "HTTP Error 404: Not Found"
+    ],
+    [
+      "build/../assets/audio/sfx/unequip-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ],
+    [
+      "build/../assets/audio/sfx/paper-1.mp3",
+      "HTTP Error 403: Forbidden"
+    ]
+  ]
+}

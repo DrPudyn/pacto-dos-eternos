@@ -1,0 +1,10 @@
+const steps=require('./tutorial-content.cjs');
+const REWARD=Object.freeze({heroes:15,weapons:15});
+function create(){return {version:1,step:0,legacyStarter:false,deferred:false,completedAt:null,rewardClaimedAt:null};}
+function book(user){return user.tutorial??={...create(),legacyStarter:true,deferred:true};}
+function view(user){const b=book(user);return {version:1,step:b.step,total:steps.length,completed:!!b.completedAt,legacyStarter:!!b.legacyStarter,rewardClaimed:!!b.rewardClaimedAt||!!b.legacyStarter,deferred:!!b.deferred,autoStart:!b.legacyStarter&&!b.completedAt&&!b.deferred,reward:REWARD};}
+function advance(user,expectedStep){const b=book(user);if(!Number.isInteger(expectedStep)||expectedStep<0||expectedStep>=steps.length-1)throw Error('Etapa do tutorial inválida.');if(b.completedAt)return view(user);if(expectedStep<b.step)return view(user);if(expectedStep!==b.step)throw Error('Conclua a etapa atual antes de avançar.');b.step++;b.deferred=false;return view(user);}
+function complete(user,player){const b=book(user);if(b.completedAt)return {awarded:{heroes:0,weapons:0}};if(b.step!==steps.length-1)throw Error('Conclua todas as etapas do tutorial antes de receber a recompensa.');const awarded={heroes:0,weapons:0};if(!b.legacyStarter&&!b.rewardClaimedAt){for(const key of ['mintCards','weaponSummons'])if(!Number.isSafeInteger(player[key])||player[key]<0||player[key]>Number.MAX_SAFE_INTEGER-15)throw Error('Não foi possível confirmar seus recursos. Atualize o jogo.');player.mintCards+=REWARD.heroes;player.weaponSummons+=REWARD.weapons;b.rewardClaimedAt=Date.now();Object.assign(awarded,REWARD);}b.completedAt=Date.now();b.deferred=false;return {awarded};}
+function defer(user){book(user).deferred=true;return view(user);}
+function resume(user){if(!book(user).completedAt)book(user).deferred=false;return view(user);}
+module.exports={steps,REWARD,create,book,view,advance,complete,defer,resume};

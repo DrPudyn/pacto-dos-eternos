@@ -1,0 +1,6 @@
+Rocha do ferreiro: edição pela ferramenta integrada imagegen da sprite original forge-entrance-CysMN1Yy.png.
+Pedido: preservar rocha, rosto, escada, silhueta e cores; acrescentar poucas fissuras finas de lava alaranjada nas laterais e brilho quente na boca da forja. Fundo transparente, pixel art, sem personagens adicionais.
+O resultado original foi preservado em rocha-lava-original-gerada.png.
+Integração: recorte do conteúdo transparente e redução sem suavização para a dimensão original de 70 x 74 pixels, em minihero-offline/build/forge-lava.png; copiado pelo preparador para shared-build.
+Os ferreiros e suas animações são assets separados e não foram alterados.
+Baú aberto: continuação do ícone vetorial pixel art existente em local-economy-ui.cjs, com a mesma paleta e ferragens.

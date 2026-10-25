@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>Dimensão Sombria — Prévia de Pacto dos Eternos</title>
+ <link rel="stylesheet" href="./realm-preview.css?v=5">
+ <script src="./realm-preview.js?v=5" defer></script>
+</head>
+<body>
+ <main class="realm" aria-label="Prévia do mundo do Rei Demônio">
+  <div class="sky" aria-hidden="true"></div>
+  <header class="header"><div><span class="eyebrow">PACTO DOS ETERNOS</span><h1>Dimensão Sombria</h1></div><span class="preview-badge">PRÉVIA INTERATIVA</span></header>
+  <div class="viewport">
+   <div class="world" id="world">
+    <img class="world-art" src="./realm-demon-preview-v3.png" alt="Arquipélago sombrio de fortalezas e pontes, até a cidadela do Rei Demônio" draggable="false">
+    <canvas id="effects" width="1280" height="720" aria-hidden="true"></canvas>
+    <svg id="regions" viewBox="0 0 1280 720" aria-label="Territórios do reino" role="group"></svg>
+   </div>
+   <div class="fog fog-back" aria-hidden="true"></div><div class="fog fog-front" aria-hidden="true"></div>
+  </div>
+  <footer class="footer"><div><span class="status-orb"></span><span id="progress">Um caminho se abre além da névoa.</span></div><p>Aponte para um local e clique para explorar.</p><button id="reset" type="button">Recomeçar prévia</button></footer>
+ </main>
+ <dialog id="detail" aria-labelledby="region-name">
+  <form method="dialog"><button class="close" aria-label="Fechar informações">×</button></form>
+  <span class="eyebrow" id="region-status"></span><h2 id="region-name"></h2><p id="region-lore"></p>
+  <div class="region-facts"><div><small>EXPEDIÇÃO</small><strong id="region-levels"></strong></div><div><small>AMEAÇA</small><strong id="region-boss"></strong></div></div>
+  <p id="region-condition" class="condition"></p><button id="complete" type="button" class="primary"></button>
+  <p class="demo-note">Demonstração visual: a conquista aqui não altera seu progresso no jogo.</p>
+ </dialog>
+</body>
+</html>

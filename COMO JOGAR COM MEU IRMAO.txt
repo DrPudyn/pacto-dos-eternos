@@ -1,0 +1,49 @@
+MINI HERO COM PERFIS, RANKING E MERCADO
+
+Abra ABRIR MINI HERO COMPARTILHADO.cmd.
+Endereco local: http://127.0.0.1:17841
+
+1. Clique em Criar perfil. Escolha seu apelido e uma senha propria.
+2. O primeiro perfil criado pelo endereco LOCAL do PC dono pode importar
+   o progresso offline uma unica vez.
+3. Para manter seu progresso atual, abra IMPORTAR MEU PROGRESSO.
+   O link abre a pagina de copia do offline, no mesmo navegador onde joga.
+   Baixe a copia e selecione o arquivo no perfil compartilhado.
+   Essa importacao substitui somente a partida do perfil compartilhado.
+   Seu jogo offline original continua intacto.
+4. Cada pessoa deve entrar no proprio perfil. As partidas sao separadas.
+   O cadastro pede apenas nome e senha; nao exige codigo de convite.
+5. LEADERBOARD compara monstros, bosses, herois criados e fusoes.
+   A contagem historica de herois/fusoes anteriores a importacao e parcial:
+   monstros/bosses recuperam o total salvo; criados usam os herois restantes;
+   fusoes antigas sem contador nao podem ser reconstruidas.
+6. MARKET: anuncie um heroi inativo, defina um preco inteiro em moedas.
+   Ele fica reservado e sai da sua lista ate ser comprado ou cancelado.
+   O comprador recebe o heroi inativo e o vendedor recebe as moedas.
+   Sem taxas, dinheiro real, NFTs ou blockchain.
+
+SALVAMENTO
+Os perfis, partidas e anuncios ficam em dados-compartilhados/jogadores.json,
+fora da pasta publica. Ha uma copia da gravacao anterior em jogadores.json.bak.
+Mantenha uma copia de toda a pasta dados-compartilhados para backup.
+Senhas sao armazenadas com scrypt e salt; sessoes usam cookie HttpOnly.
+Nao altere o arquivo de dados enquanto o servidor estiver executando.
+O combate pausa depois de 30 segundos sem consultas do jogador.
+Consulte o mesmo servidor para compartilhar ranking e mercado.
+
+ACESSO DE OUTRA CASA
+O acesso externo autorizado usa um tunel temporario do Cloudflare,
+sem abrir portas no roteador. O servidor permanece restrito ao PC;
+o tunel publica somente a versao compartilhada.
+ABRIR PARA MEU IRMAO.cmd inicia ou reutiliza o tunel e mostra o link.
+O link atual tambem fica em LINK PARA MEU IRMAO.txt.
+Envie somente o link para o seu irmao.
+Ele deve criar seu proprio perfil; nao compartilhe sua senha.
+FECHAR ACESSO EXTERNO.cmd encerra somente o tunel, mantendo o jogo local.
+O PC e o tunel precisam ficar ligados. O endereco temporario muda ao
+reiniciar o tunel e nao tem garantia de uptime.
+Sem o tunel, o endereco local acima nao funciona na casa do seu irmao.
+
+Seu antigo JOGAR MINI HERO.cmd continua abrindo o offline independente.
+Moedas de bonus adicionadas ao offline nao sao automaticamente concedidas
+a novos perfis compartilhados. O dono pode preserva-las ao importar o save.

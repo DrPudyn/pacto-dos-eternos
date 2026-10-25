@@ -1,0 +1,50 @@
+/* Mobile layout: touch targets, scrollable panels and readable navigation. */
+.refuge-mobile-nav{display:none}
+.shared-lobby .player{position:relative}
+ .shared-player-actions{position:absolute;left:0;top:66px;z-index:20;display:flex;align-items:start;gap:8px}
+.shared-player-action{width:76px;height:90px;min-height:90px;padding:0;border:0;background:none;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;cursor:pointer;transition:filter .16s,transform .16s}
+.shared-quick-action-art{display:block;width:72px;height:72px;object-fit:contain;image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 3px 1px #050913)}
+.shared-quick-action-label{color:#ffe3a3;font:17px/1 'Jersey 10',sans-serif;text-transform:uppercase;text-shadow:1px 1px #08111e,-1px -1px #08111e,1px -1px #08111e,-1px 1px #08111e;pointer-events:none}
+.shared-player-action-ticket .shared-quick-action-label{color:#afe9ff}
+.shared-player-action:hover{filter:brightness(1.2);transform:translateY(-2px)}
+.shared-player-action:active{transform:translateY(1px)}
+.shared-ticket-toolbar{border-color:#92c9dc!important}
+.shared-ticket-list{display:grid;gap:10px;max-height:55vh;overflow:auto}
+.shared-ticket{padding:12px;background:#101a27;border:1px solid #42536a;display:grid;gap:8px}
+.shared-ticket header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.shared-ticket header strong{color:#ffe0a0}
+.shared-ticket-category,.shared-ticket-meta{color:#90cbe1;font:12px sans-serif}
+.shared-ticket-description{white-space:pre-wrap;overflow-wrap:anywhere;color:#e0e7f1;font:14px/1.5 sans-serif}
+.shared-ticket-form{max-height:65vh;overflow:auto}
+.shared-ticket-form textarea{width:100%;box-sizing:border-box;resize:vertical;background:#10151e;color:#f5f5f5;border:1px solid #536079;padding:12px;font:15px/1.4 sans-serif}
+.shared-ticket-form label{color:#e8d29d}
+.shared-updates-list{max-height:65vh;overflow:auto}
+.shared-update-entry{margin:12px 0;padding:12px;background:#101a27;border-left:3px solid #70c9ef}
+.shared-update-entry time{color:#a9c0d3;font:12px sans-serif}
+.shared-update-entry h3{margin:6px 0;color:#ffe0a0;font:25px 'Jersey 10',sans-serif}
+.shared-update-entry ul{margin:5px 0;padding-left:20px;color:#d9e3ee;font:14px/1.5 sans-serif}
+@media(max-width:760px){
+ html,body{overscroll-behavior:none}body{max-width:100vw}#app{max-width:100%;min-width:0;height:100dvh}
+ button,a,input,select,textarea{touch-action:manipulation}input,select,textarea{font-size:16px!important}button{min-height:40px}
+ .shared-toolbar{padding:4px 8px;gap:6px;flex-wrap:wrap;font-size:11px}.shared-toolbar button{min-height:32px;font-size:11px;padding:5px}.shared-status{flex:1;min-width:130px}
+ .topbar{padding-left:8px;padding-right:8px;gap:6px;--topbar-height:70px}.topbar-right{gap:5px}.topbar-title{font-size:28px;white-space:normal}.topbar-back{gap:6px}.player-avatar{transform:scale(.8);transform-origin:left center;margin-right:-10px}.shared-lobby .player-text{max-width:40vw}.shared-lobby .player-name{font-size:21px}.shared-online-count{margin-left:0;font-size:11px;display:flex}.topbar .balance{font-size:19px}.topbar .top-btn{min-width:40px;padding:5px}
+ .refuge-world{inset:70px 0 0;display:flex;flex-direction:column;justify-content:flex-start;overflow:auto;padding-bottom:100px;box-sizing:border-box}.refuge-scene{width:100%;flex:none}.refuge-caption{position:static;order:1;margin:6px;text-align:center;font-size:10px}.refuge-destinations{display:none}.refuge-mobile-nav{order:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:10px 16px 20px;width:100%;box-sizing:border-box}.refuge-mobile-link{border:1px solid #ad945e;background:linear-gradient(#203d57,#102339);color:#ffe2a2;min-height:49px;padding:10px 5px;font:22px 'Jersey 10',sans-serif;box-shadow:0 3px #050d18}.refuge-mobile-link:active{background:#345879}.refuge-mobile-dungeon{border-color:#bc85f6}.refuge-mobile-summon{border-color:#73d2ff}.refuge-mobile-forge{border-color:#ffb05e}
+ .lobby-chat{max-width:calc(100% - 16px);width:285px;right:8px;bottom:8px}.lobby-chat-toggle{font-size:17px;min-height:40px}.lobby-chat-log{height:130px}.lobby-chat-form button{min-height:40px}.lobby-chat-form input{width:0}
+ .codex-launcher{left:10px;bottom:max(8px,env(safe-area-inset-bottom));width:52px;height:65px}.codex-launcher svg{width:42px;height:44px}.codex-launcher-label{font-size:16px}.gear-backpack{left:70px;bottom:max(8px,env(safe-area-inset-bottom));width:58px;height:65px;font-size:16px}.gear-backpack-art{width:50px;height:45px}
+ .page{padding:10px 8px 85px;inset:70px 0 0}.page-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 24px);overflow:auto;padding:20px 14px}.modal-backdrop{padding:6px}.panel{max-width:100%;max-height:calc(100dvh - 16px);box-sizing:border-box}.panel-body{overflow:auto;min-width:0}.panel-title{font-size:28px}.heroes-layout{display:flex;flex-direction:column;height:auto;min-height:0;gap:12px}.heroes-layout>*{min-width:0;max-width:100%}
+ .gear-modal-backdrop{padding:6px}.gear-modal-backdrop .gear-bag-layout,.gear-box-layout{grid-template-columns:minmax(0,1fr)!important;gap:14px}.gear-filters{display:flex;flex-wrap:wrap;gap:6px}.gear-filters select{flex:1;min-width:120px;max-width:100%;height:42px}.gear-modal-backdrop .gear-inventory-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.gear-equip-panel{min-width:0}.gear-anvil-stage{min-height:140px}
+ .codex-dialog{width:calc(100vw - 12px);max-height:calc(100dvh - 16px);padding:5px;zoom:1!important}.codex-book{grid-template-columns:minmax(0,1fr);min-height:0;zoom:1!important}.codex-page{padding:14px 10px}.codex-left{border-right:0}.codex-right{border-left:0}.codex-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.codex-tab{font-size:18px;padding:7px;gap:5px}.codex-grid,.codex-weapon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .campaign-header{padding:7px;gap:7px}.campaign-header h2{font-size:25px}.campaign-body{padding:8px}.campaign-team-slots{grid-template-columns:repeat(2,minmax(0,1fr))!important}.tower-body{padding:8px}.tower-dungeon{min-height:230px;height:48dvh}
+ .atb-cinematic .atb-top{flex-wrap:wrap;left:4px;right:4px}.atb-cinematic .atb-top button{min-height:36px;font-size:13px}.atb-enemy-inspect{top:90px;width:155px}.atb-inspect-skill{min-height:44px}.atb-inspect-skill:focus-within .atb-skill-tooltip{display:block}.atb-skill-tooltip{width:min(270px,75vw)}
+}
+@media(max-width:760px) and (orientation:portrait){
+ .atb-cinematic .atb-arena{inset:0 0 255px}.atb-cinematic .atb-canvas{object-fit:contain;background:#101f29}.atb-cinematic .atb-command-grid{grid-template-columns:repeat(2,minmax(0,1fr));bottom:25px;gap:4px}.atb-cinematic .atb-command{padding:4px}.atb-cinematic .atb-command .atb-skill-button{min-height:65px}.atb-cinematic .atb-command strong{font-size:17px}.atb-cinematic .atb-command small{font-size:11px}.atb-skill-name{font-size:12px}
+}
+@media(max-height:500px) and (orientation:landscape) and (max-width:1000px){
+ .shared-toolbar{display:none}.refuge-world{inset:62px 0 0;padding-bottom:70px}.refuge-scene{display:none}.refuge-mobile-nav{grid-template-columns:repeat(4,minmax(0,1fr));padding:8px}.refuge-caption{display:none}.atb-cinematic .atb-top strong{font-size:14px}.atb-enemy-inspect{top:55px;width:150px}.atb-cinematic .atb-command-grid{gap:3px}.atb-cinematic .atb-command .atb-skill-button{min-height:48px}.atb-cinematic .atb-command small{font-size:9px}.atb-skill-name{font-size:10px}
+}
+@media(pointer:coarse){.refuge-clouds{animation-duration:120s}.refuge-island,.refuge-effects,.refuge-destinations{animation:none}}
+@media(max-width:760px){#app.shared-lobby{top:44px;bottom:0;height:calc(100dvh - 44px)}.shared-toolbar{flex-wrap:nowrap;height:44px}.shared-status{display:none}.shared-toolbar button{min-height:30px}.shared-lobby .topbar{--topbar-height:70px}.gear-modal-backdrop .panel{width:100%;min-width:0}.gear-modal-backdrop .panel-body{padding:12px}}
+@media(max-width:760px){.shared-player-actions{top:57px;left:0;gap:4px}.shared-player-action{width:64px;height:76px;min-height:76px}.shared-quick-action-art{width:60px;height:60px}.shared-quick-action-label{font-size:15px}.shared-ticket-toolbar{font-size:10px!important;padding:4px!important}}
+@media(max-height:500px) and (orientation:landscape) and (max-width:1000px){#app.shared-lobby{top:0;height:100dvh}}
+@media(max-height:500px) and (orientation:landscape) and (max-width:1000px){.refuge-mobile-nav{display:grid;width:100%;box-sizing:border-box;gap:8px}.refuge-mobile-link{min-height:45px;border:1px solid #ad945e;background:#152e45;color:#ffe2a2;font:20px 'Jersey 10',sans-serif}.refuge-world{display:flex;flex-direction:column;justify-content:flex-start;overflow:auto}.lobby-chat{top:auto;bottom:8px;width:260px}}

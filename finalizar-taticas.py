@@ -1,0 +1,6 @@
+from pathlib import Path
+p=Path('campaign-tactics.js');s=p.read_text();s=s.replace("m.impact={...m.warning,at:this.elapsed};m.warning=null;", "m.impact={...m.warning,at:this.elapsed};if(m.role==='charger'&&!m.move){const target=alive().sort((a,c)=>distance(a.state,m)-distance(c.state,m))[0];if(target){const axis=m.warning.axis,sign=Math.sign(target.state[axis]-m[axis]);let goal={x:m.x,y:m.y};for(let step=0;step<3;step++){const next={...goal,[axis]:goal[axis]+sign};if(blocked(Math.floor(next.x),Math.floor(next.y))||this.monsters.some(n=>n!==m&&!n.dead&&distance(n,next)<.8))break;goal=next;}m.move={x:m.x,y:m.y,tx:goal.x,ty:goal.y,at:this.elapsed,duration:.28};}}m.warning=null;")
+p.write_text(s)
+p=Path('campaign-enemies-client.js');s=p.read_text();s=s.replace("const alpha=m.warning?.18", "if(m.role==='ranged'&&m.warning){const progress=Math.max(0,1-(w.endsAt-time)/.65);g.circle(q(m.x+(w.x-m.x)*progress),q(m.y+(w.y-m.y)*progress)-5,2).fill(stage.bestiary.color);}\n   const alpha=m.warning?.18");p.write_text(s)
+p=Path('campaign-client.js');s=p.read_text();s=s.replace("s.count+' monstros · '+s.hp.toLocaleString('pt-BR')+' de vida cada'", "(s.count-3)+' criaturas · 1 elite · 2 objetivos · Vida base '+s.hp.toLocaleString('pt-BR')")
+p.write_text(s)

@@ -1,0 +1,43 @@
+/* Salão dos Pactos: nenhum verso de carta ou envelope na interface ativa. */
+.card-back{background:url('./pact-seal.png') center/contain no-repeat!important;aspect-ratio:1;image-rendering:pixelated}
+.card-gloss,.card-holo,.art-gloss{background:none!important;display:none!important}
+.summon-stage{background:linear-gradient(#101a2940,#0a132080),url('./pact-hall.png') center/cover!important;border:2px solid #6a593d}
+.summon-deck{filter:drop-shadow(0 0 15px #d6a54844)}.summon-cards{object-fit:contain;max-height:100%;animation:pact-book-float 4s ease-in-out infinite}.summon-rays{opacity:.2}
+.art-cards,.art-summon-image,.buy-art-summon img,.buy-art-fusion img{object-fit:contain;image-rendering:pixelated}
+.reveal-envelope{background:url('./pact-book.png') center/contain no-repeat!important;animation:none!important}
+.pact-reveal{position:fixed;inset:0;z-index:1400;background:linear-gradient(#08121be8,#0b1423c9),url('./pact-hall.png') center/cover;overflow:auto;overscroll-behavior:contain;color:#f3e6c8;font:16px/1.4 Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
+.pact-reveal-panel{width:min(1150px,100%);text-align:center}.pact-reveal h1{font:42px/1 'Jersey 10',sans-serif;letter-spacing:2px;color:#f1ce80;margin:0 0 6px}.pact-reveal header p{margin:0 0 20px;color:#c4cfe0}
+.pact-reveal-grid{display:grid;grid-template-columns:repeat(var(--pact-columns),minmax(0,1fr));gap:12px;justify-content:center;margin:auto;max-width:1050px;visibility:hidden}.pact-ready .pact-reveal-grid{visibility:visible}
+.pact-hero{position:relative;min-height:195px;border:0;background:transparent;color:#ede4d1;cursor:pointer;padding:6px;display:grid;place-items:center;outline-offset:1px;isolation:isolate;font-family:Arial,Helvetica,sans-serif}
+.pact-hero:focus-visible{outline:2px solid #f0c96e}.pact-hero:before{content:'';position:absolute;inset:10% 5%;border:2px dashed #d5ad6444;border-radius:50%;transform:scale(.75);transition:transform .4s,opacity .4s;pointer-events:none}
+.pact-seal{position:absolute;width:min(150px,90%);height:150px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 10px #d1ac5540);animation:pact-seal-hover 2.8s ease-in-out infinite;transition:opacity .45s,transform .45s,filter .45s}
+.pact-result{display:flex;flex-direction:column;align-items:center;gap:3px;opacity:0;transform:translateY(16px);transition:opacity .5s .1s,transform .5s .1s;pointer-events:none}
+.pact-result>.rarity-card{margin-bottom:4px}.pact-result strong{font-size:12px;color:var(--rarity);letter-spacing:1px}.pact-result>span{font-size:14px}.pact-result small{font-size:11px;color:#cad4e4}.pact-result .skill-badges{height:25px;justify-content:center}
+.pact-open .pact-seal{opacity:0;transform:scale(1.25);filter:brightness(1.7)}.pact-open .pact-result{opacity:1;transform:none}.pact-open:before{transform:scale(1.15);opacity:0;border-color:var(--rarity)}
+.pact-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:12px 0}.pact-status{min-height:23px;color:#d4c397;margin:14px 0;font-size:14px}.pact-intro{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;background:radial-gradient(ellipse,#d2a15418,transparent 55%)}.pact-intro img{width:min(320px,65vw);image-rendering:pixelated;filter:drop-shadow(0 0 24px #e6b65b55);animation:pact-book-awaken 1.6s ease-in-out both}
+.pact-instant .pact-result,.pact-instant .pact-seal{transition:none!important}.pact-actions [hidden]{display:none!important}
+@keyframes pact-book-awaken{0%{opacity:0;transform:translateY(45px) scale(.75)}25%{opacity:1;transform:translateY(0) scale(1)}65%{opacity:1;transform:translateY(-10px) scale(1.03);filter:drop-shadow(0 0 28px #eac773aa)}100%{opacity:0;transform:translateY(-45px) scale(.85)}}
+@keyframes pact-book-float{50%{transform:translateY(-6px)}}@keyframes pact-seal-hover{50%{translate:0 -4px}}
+/* Centraliza a composição da forja inteira, incluindo o ferreiro à frente. */
+.art-forge .art-forge-image{transform:translateY(-40px)!important}.art-forge .forge-smith{translate:0 -40px}
+@media(max-width:650px){.pact-reveal{padding:15px 8px;align-items:flex-start}.pact-reveal h1{font-size:32px}.pact-reveal-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.pact-hero{min-height:190px;padding:2px}.pact-seal{height:100px}.pact-result small{font-size:9px}.pact-result>span{font-size:12px}.pact-result strong{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.pact-intro img,.pact-seal,.summon-cards{animation:none}.pact-result,.pact-seal,.pact-hero:before{transition:none}}
+
+.pact-reveal{align-items:flex-start;padding-top:55px}.pact-reveal-panel{margin:auto}.pact-reveal-grid{row-gap:6px}.pact-result .skill-badges{height:21px}.pact-result{gap:2px}.pact-hero{min-height:195px}
+
+.art-summon-image{position:absolute!important;left:50%!important;top:50%!important;width:220px!important;height:240px!important;max-width:85%!important;max-height:85%!important;transform:translate(-50%,-50%)!important;object-fit:contain!important}.art-cards{width:170px!important;height:190px!important;object-fit:contain!important}.buy-art-summon img,.buy-art-fusion img{width:130px!important;height:150px!important;object-fit:contain!important}.summon-cards{width:min(270px,90%)!important;height:300px!important;object-fit:contain!important}
+
+.pact-hero{min-height:170px}.pact-reveal header p{margin-bottom:12px}.pact-reveal{scroll-padding-top:55px}
+
+/* Revelação: molduras completas e sprites grandes, como na apresentação anterior. */
+.pact-reveal-panel{width:min(1480px,100%)}
+.pact-reveal-grid{display:flex;flex-wrap:wrap;gap:16px 12px;max-width:1450px;justify-content:center}
+.pact-hero{width:calc(var(--pact-width) + 10px);min-height:0;padding:5px;flex:0 0 auto}
+.pact-result{gap:5px}.pact-result>.rarity-card{clip-path:none;border:0;border-radius:0;overflow:visible;background:none;box-shadow:none;margin-bottom:4px}
+.pact-result .card-frame{display:block!important}.pact-result .rarity-card:after{display:none}
+.pact-result strong{font-size:14px}.pact-result>span{font-size:16px}.pact-result small{font-size:12px;white-space:nowrap}
+.pact-seal{width:min(160px,95%);height:180px}.pact-reveal header p{margin-bottom:18px}
+@media(max-width:650px){.pact-reveal-grid{gap:12px 5px}.pact-hero{width:calc(var(--pact-width) + 6px);padding:3px}.pact-result strong{font-size:11px}.pact-result>span{font-size:13px}.pact-result small{font-size:9px}.pact-seal{height:125px}}
+
+.pact-result{gap:2px}.pact-result>.rarity-card{margin-bottom:2px}.pact-reveal header p{margin-bottom:8px}.pact-reveal-grid{row-gap:12px}
+

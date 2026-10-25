@@ -1,0 +1,29 @@
+# Artes do Refúgio dos Eternos
+
+## refuge-island
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Use reference as visual direction. Create the same beautiful floating fortress island with all buildings in the same locations, central blue magical invocation altar with small grimoire and equipment chest, purple dungeon portal upper left, hero training barracks left, trophy monument lower left, bazaar right middle, dragon forge lower right with lava channels, infinity tower upper right connected by bridge, huge blue crystal underside. Remove ALL header, ALL text/signboards, ALL bottom icons and interface. Full composition with island entirely visible against indigo cloudy moon sky. No chains (will be animated separately). No characters. This is the actual playable game background.
+
+## refuge-forge
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Interior of a colossal dragon forge: enormous horned dragon-head furnace in rear right, molten orange lava flowing in stone channels along right wall, heavy anvils and racks on left, suspended chains, bellows, glowing embers, cathedral vaulted blue stone architecture. Epic artisanal atmosphere, deep perspective.
+
+## refuge-market
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Interior of an extravagant medieval floating-island bazaar: covered navy canopy stalls at sides, jewel-lit enchanted weapon displays, hanging copper lanterns, blue gold chests, rich fabrics, distant moon seen through vaulted opening, polished cobbled floor. Inviting trading atmosphere.
+
+## refuge-ranking
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Interior of a sacred hall of champions: colossal golden trophy altar in distant center, monumental winged statues flanking it, rows of smaller trophies along sides, monumental blue marble staircase, golden celestial light shafts, star emblems and blue banners. Majestic competitive glory.
+
+## refuge-heroes
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Interior of a grand heroes training academy: vaulted navy stone great hall, archery targets on right, sword racks shields spears training dummies left, banners with open-book four-point star symbol, blue magical training circle in distant center, warm lanterns and atmospheric depth. No heroes.
+
+## refuge-tower
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Inside the Tower of Infinity: breathtaking impossibly tall circular cosmic cathedral, spiraling staircases climbing countless levels into an enormous celestial blue vortex overhead, floating stone platforms, constellations through shattered windows, blue crystal energy core, gold astronomical rings. Spectacular grand scale, ominous and beautiful.
+
+## refuge-summon
+
+Production background asset for Pacto dos Eternos fantasy game. Spectacular meticulous pixel art, crisp visible pixels, block shading, navy stone, aged brass and golden amber highlights, coherent premium RPG art. Landscape 16:9. NO text, letters, labels, UI, buttons, frames, logos, watermark. Environment only, no foreground characters. Detail concentrated at sides and top, center and lower region quiet dark readable space for game interface. Interior of the mythical Hall of Pacts: enormous ancient blue stone sanctuary, stained glass amber at sides, central distant pedestal with closed blue leather grimoire brass trim, blue light beams and arcane circles, floating tiny blue crystals, golden candles. Deep magical atmosphere with luminous azure energy paths. Original open-book four-point star emblems.

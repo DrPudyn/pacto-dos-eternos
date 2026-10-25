@@ -1,0 +1,1 @@
+let animationFrame=0;setInterval(()=>{const row=[0,0,1,2,1,2,3,3][animationFrame++%8];for(const im of document.querySelectorAll('img[data-mob]'))im.src='enemy-'+(im.dataset.region??1)+'-'+im.dataset.mob+'-pixel-'+row+'.png';},200);

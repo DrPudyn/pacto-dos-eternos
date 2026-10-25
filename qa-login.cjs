@@ -1,0 +1,5 @@
+// Login preview uses a temporary database, never the real player accounts.
+const http=require('http'),fs=require('fs'),path=require('path'),os=require('os');
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pacto-login-')),app=require('./shared-service.cjs').service({dir}),root=path.join(__dirname,'minihero-offline');
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.woff2':'font/woff2','.mp3':'audio/mpeg'};
+const server=http.createServer(async(q,s)=>{const url=new URL(q.url,'http://localhost');if(await app.handle(q,s,url))return;const name=url.pathname==='/'?'/compartilhado.html':url.pathname;if(!(/^\/shared-build\/[A-Za-z0-9_.-]+$/.test(name)||['/compartilhado.html','/shared.css'].includes(name))){s.writeHead(404);return s.end();}fs.readFile(path.join(root,name),(err,data)=>{if(err){s.writeHead(404);return s.end();}s.writeHead(200,{'Content-Type':mime[path.extname(name)]??'application/octet-stream','Cache-Control':'no-store'});s.end(data);});});server.listen(17842,'127.0.0.1',()=>console.log('Login isolado em http://127.0.0.1:17842'));

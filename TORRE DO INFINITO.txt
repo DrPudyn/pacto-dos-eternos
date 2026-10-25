@@ -1,0 +1,15 @@
+TORRE DO INFINITO — DUNGEON
+
+Abra o cartão TORRE DO INFINITO no menu.
+Escolha exatamente 15 heróis com energia. Use busca e filtro de classe ou a seleção automática; confira os retratos e a energia no painel do time.
+
+A tentativa usa uma cópia dos heróis escolhidos. O time não pode ser alterado e não recebe reparo ou Porter durante a expedição. A energia é carregada entre os andares. Os heróis que esgotam a energia saem; quando o último sai, aparece o resultado.
+
+As sprites, movimentos, efeitos, sons e cenário usam o renderizador original da Dungeon. Inimigos: slime, blueslime, orc e minotaur. A cada cinco andares, há o mesmo Giant da Dungeon (100 mil HP no quinto andar). A resistência dos monstros cresce nos andares seguintes. Ao limpar o mapa, a torre avança com uma transição suave.
+
+Voltar pausa a tentativa; abrir o cartão permite retomá-la. O resultado registra andar concluído, monstros, bosses e tempo. O maior andar aparece no leaderboard. Não são creditadas moedas pela torre nesta versão.
+
+Esta implementação não usa o cenário, os mobs ou as artes da expansão de selva retirada. Tentativas e recordes do protótipo anterior não contam na nova torre; os dados antigos ficam preservados como legado.
+
+Arquivos: tower-client.js, tower-service.cjs, tower-world.cjs e createTowerBattle em shared-engine.cjs.
+Verificações: node verificar-torre.cjs e node testar-compartilhado.cjs; seleção, movimento, pausa e retomada também conferidos no navegador com perfil de teste.

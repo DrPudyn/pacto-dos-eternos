@@ -1,0 +1,39 @@
+MINI HERO - ADAPTACAO LOCAL PARA UM JOGADOR
+
+COMO JOGAR
+1. Abra JOGAR MINI HERO.cmd com dois cliques.
+2. O navegador abre http://127.0.0.1:17840.
+3. Em HEROES, escolha o filtro ALL e ative os herois.
+4. Volte e entre em DUNGEON para assistir a caca automatica.
+5. Use CHEST para abrir cartas de resgate e WITHDRAW para passar as
+   recompensas ao saldo local. SUMMON, FUSION, BLACKSMITHS e PORTER
+   usam moedas ficticias locais.
+
+Nao precisa de internet, carteira ou SOL. O Node.js ja esta instalado
+neste PC. Mantenha a pasta minihero-offline junto ao arquivo CMD.
+
+SALVAMENTO
+O progresso e salvo automaticamente no navegador deste PC, a cada
+3 segundos. Use sempre o mesmo navegador e o mesmo endereco acima.
+Nao apague os dados desse site se quiser conservar o progresso.
+O progresso de uma carteira do jogo online nao e importado.
+
+FIDELIDADE E LIMITES
+Interface, imagens, sons e motor de combate vieram dos arquivos publicos
+do Mini Hero consultados em 17/10/2026. Nao e uma criacao visual parecida.
+O servidor original nao foi fornecido: conta, economia, geracao de herois,
+fusao e persistencia receberam implementacoes locais. Portanto nao se
+pode garantir identidade completa com as regras privadas do servidor.
+A chance de boss e de fusao critica e aproximada no adaptador.
+O jogo local comeca com 3 herois comuns, 3 cartas e 100.000 moedas ficticias.
+Mercado entre jogadores, convites, NFTs e transacoes reais nao funcionam
+offline. WITHDRAW apenas transfere moedas entre bau e saldo local.
+
+Os arquivos pertencem aos respectivos autores. Adaptacao pessoal local,
+nao oficial. Origem: https://dg.minihero.org/
+
+ARQUIVOS TECNICOS
+offline-adapter.js: implementacao local que substitui os servicos remotos.
+preparar-offline.cjs: aplica o adaptador a copia publica do cliente.
+minihero-offline/servidor.cjs: servidor somente em 127.0.0.1.
+O servidor envia uma politica que impede conexoes a sites externos.

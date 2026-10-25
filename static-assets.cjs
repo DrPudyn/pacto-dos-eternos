@@ -1,0 +1,33 @@
+const fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
+const {promisify}=require('node:util');
+const brotli=promisify(zlib.brotliCompress),gzip=promisify(zlib.gzip);
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.mp3':'audio/mpeg','.webmanifest':'application/manifest+json'};
+function acceptsEncoding(header,name){return (header??'').split(',').some(part=>{const [token,...params]=part.trim().toLowerCase().split(';');const quality=params.find(p=>p.trim().startsWith('q='));return token.trim()===name&&(!quality||Number(quality.trim().slice(2))>0);});}
+function staticAssets(root,{maxBytes=64*1024*1024}={}){
+ const cache=new Map(),pending=new Map();let used=0;
+ async function read(file,stat,encoding){
+  const key=file+':'+stat.mtimeMs+':'+stat.size+':'+encoding;
+  if(cache.has(key)){const value=cache.get(key);cache.delete(key);cache.set(key,value);return value;}
+  if(pending.has(key))return pending.get(key);
+  const job=(async()=>{let data=await fs.promises.readFile(file);if(encoding==='br')data=await brotli(data,{params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}});else if(encoding==='gzip')data=await gzip(data,{level:4});
+   if(data.length<=maxBytes){while(used+data.length>maxBytes&&cache.size){const oldest=cache.keys().next().value;used-=cache.get(oldest).length;cache.delete(oldest);}cache.set(key,data);used+=data.length;}return data;})();
+  pending.set(key,job);try{return await job;}finally{pending.delete(key);}
+ }
+ return async function serve(req,res,name){
+  if(!(/^\/shared-build\/[A-Za-z0-9_.-]+$/.test(name)||['/compartilhado.html','/shared.css','/icon-192.png','/icon-512.png','/manifest.webmanifest'].includes(name))){res.writeHead(404);res.end();return;}
+  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
+  try{
+   let file=path.join(root,name),stat=await fs.promises.stat(file),ext=path.extname(file);
+   if(ext==='.png'&&/image\/webp/i.test(req.headers.accept??'')){
+    const variant=file.slice(0,-4)+'.webp';try{const webp=await fs.promises.stat(variant);if(webp.mtimeMs>=stat.mtimeMs&&webp.size<stat.size){file=variant;stat=webp;ext='.webp';}}catch{}
+   }
+   const accepted=req.headers['accept-encoding']??'',compressible=['.html','.js','.css','.webmanifest'].includes(ext),encoding=compressible&&stat.size>1024?(acceptsEncoding(accepted,'br')?'br':acceptsEncoding(accepted,'gzip')?'gzip':''):'';
+   const etag='W/"'+stat.size.toString(16)+'-'+Math.trunc(stat.mtimeMs).toString(16)+'-'+ext.slice(1)+'-'+encoding+'"';
+   const headers={'Content-Type':types[ext]??'application/octet-stream','Cache-Control':['.png','.webp','.woff2','.mp3'].includes(ext)?'public, max-age=300, must-revalidate':'no-cache',ETag:etag,'Last-Modified':stat.mtime.toUTCString(),Vary:'Accept, Accept-Encoding','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"};
+   if(encoding)headers['Content-Encoding']=encoding;
+   if(req.headers['if-none-match']?.split(',').map(x=>x.trim()).includes(etag)){res.writeHead(304,headers);res.end();return;}
+   const data=await read(file,stat,encoding);headers['Content-Length']=data.length;res.writeHead(200,headers);res.end(req.method==='HEAD'?undefined:data);
+  }catch(e){res.writeHead(e.code==='ENOENT'?404:500);res.end();}
+ };
+}
+module.exports={staticAssets,acceptsEncoding};

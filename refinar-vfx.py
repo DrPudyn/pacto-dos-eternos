@@ -1,0 +1,6 @@
+from pathlib import Path
+p=Path('campaign-atb-vfx.js');s=p.read_text(encoding='utf-8-sig');old="else if(/nature|sand/.test(type)&&age>.3)"
+new="""else if(/spore|venom|curse|web/.test(event.effect)&&age>.25){for(let k=0;k<19;k++){const a=k*2.4+age*.8,r=18+impact*55,x=center.x+Math.cos(a)*r,y=center.y+Math.sin(a)*r*.6-age*18;pixel(x,y,5+k%3*2,5+k%3*2,k%3?'#98b95b':'#d5e59c',.6);if(k%5===0)line([[x,y],[x+6,y-4],[x+9,y]],'#cee29b',2,.7);}}
+   else if(type==='wind'||/arrow|pierce|pick|royal/.test(event.effect)){const direction=Math.atan2(center.y-from.y+45,center.x-from.x),x=from.x+(center.x-from.x)*travel,y=from.y-45+(center.y-from.y+45)*travel;if(travel<1){for(let k=5;k>=0;k--){const tx=x-Math.cos(direction)*k*8,ty=y-Math.sin(direction)*k*8;pixel(tx,ty,k<2?8:3,k<2?4:2,k<2?style.light:style.primary,1-k*.12);}line([[x-10,y-6],[x+10,y],[x-10,y+6]],style.primary,4);line([[x-26,y-6],[x-18,y],[x-26,y+6]],style.light,3);}if(impact>0){for(let k=0;k<9;k++){const a=k*.8,r=impact*65;line([[center.x+Math.cos(a)*r,center.y+Math.sin(a)*r],[center.x+Math.cos(a)*(r+8),center.y+Math.sin(a)*(r+8)]],k%2?style.primary:style.light,3,1-impact);}}}
+   else if(/nature|sand/.test(type)&&age>.3)"""
+assert old in s;s=s.replace(old,new);p.write_text(s,encoding='utf-8')
