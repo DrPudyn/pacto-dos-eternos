@@ -13,21 +13,27 @@ function staticAssets(root,{maxBytes=64*1024*1024}={}){
    if(data.length<=maxBytes){while(used+data.length>maxBytes&&cache.size){const oldest=cache.keys().next().value;used-=cache.get(oldest).length;cache.delete(oldest);}cache.set(key,data);used+=data.length;}return data;})();
   pending.set(key,job);try{return await job;}finally{pending.delete(key);}
  }
+ const rootResolved=path.resolve(root);
+ function miss(res,status){res.writeHead(status,{'X-Content-Type-Options':'nosniff','Cache-Control':'no-store','Referrer-Policy':'same-origin'});res.end();}
  return async function serve(req,res,name){
-  if(!(/^\/shared-build\/[A-Za-z0-9_.-]+$/.test(name)||['/compartilhado.html','/shared.css','/icon-192.png','/icon-512.png','/manifest.webmanifest'].includes(name))){res.writeHead(404);res.end();return;}
-  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
+  if(!(/^\/shared-build\/[A-Za-z0-9_.-]+$/.test(name)||['/compartilhado.html','/shared.css','/icon-192.png','/icon-512.png','/manifest.webmanifest'].includes(name))||name.includes('..')){miss(res,404);return;}
+  if(!['GET','HEAD'].includes(req.method)){miss(res,405);return;}
   try{
-   let file=path.join(root,name),stat=await fs.promises.stat(file),ext=path.extname(file);
+   let file=path.resolve(path.join(root,name));
+   if(file!==rootResolved&&!file.startsWith(rootResolved+path.sep)){miss(res,404);return;}
+   let stat=await fs.promises.stat(file);if(!stat.isFile()){miss(res,404);return;}
+   let ext=path.extname(file);
    if(ext==='.png'&&/image\/webp/i.test(req.headers.accept??'')){
     const variant=file.slice(0,-4)+'.webp';try{const webp=await fs.promises.stat(variant);if(webp.mtimeMs>=stat.mtimeMs&&webp.size<stat.size){file=variant;stat=webp;ext='.webp';}}catch{}
    }
    const accepted=req.headers['accept-encoding']??'',compressible=['.html','.js','.css','.webmanifest'].includes(ext),encoding=compressible&&stat.size>1024?(acceptsEncoding(accepted,'br')?'br':acceptsEncoding(accepted,'gzip')?'gzip':''):'';
    const etag='W/"'+stat.size.toString(16)+'-'+Math.trunc(stat.mtimeMs).toString(16)+'-'+ext.slice(1)+'-'+encoding+'"';
-   const headers={'Content-Type':types[ext]??'application/octet-stream','Cache-Control':['.png','.webp','.woff2','.mp3'].includes(ext)?'public, max-age=300, must-revalidate':'no-cache',ETag:etag,'Last-Modified':stat.mtime.toUTCString(),Vary:'Accept, Accept-Encoding','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"};
+   const headers={'Content-Type':types[ext]??'application/octet-stream','Cache-Control':['.png','.webp','.woff2','.mp3'].includes(ext)?'public, max-age=300, must-revalidate':'no-cache',ETag:etag,'Last-Modified':stat.mtime.toUTCString(),Vary:'Accept, Accept-Encoding','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY','Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=()','Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Resource-Policy':'same-origin','X-Permitted-Cross-Domain-Policies':'none','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"};
+   if((req.headers['x-forwarded-proto']??'')==='https')headers['Strict-Transport-Security']='max-age=15552000';
    if(encoding)headers['Content-Encoding']=encoding;
    if(req.headers['if-none-match']?.split(',').map(x=>x.trim()).includes(etag)){res.writeHead(304,headers);res.end();return;}
    const data=await read(file,stat,encoding);headers['Content-Length']=data.length;res.writeHead(200,headers);res.end(req.method==='HEAD'?undefined:data);
-  }catch(e){res.writeHead(e.code==='ENOENT'?404:500);res.end();}
+  }catch(e){miss(res,e.code==='ENOENT'||e.code==='ENOTDIR'||e.code==='EISDIR'?404:500);}
  };
 }
 module.exports={staticAssets,acceptsEncoding};
