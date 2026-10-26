@@ -129,3 +129,4 @@ fs.copyFileSync('assets/campaign-bestiary/bestiario-pixel.js','minihero-offline/
 
 for(const name of fs.readdirSync('assets/battle-arenas').filter(n=>/^battle-arena-.*\.png$/.test(n)))for(const dir of ['minihero-offline/build','minihero-offline/shared-build'])fs.copyFileSync('assets/battle-arenas/'+name,dir+'/'+name);
 require('./otimizar-assets.cjs').optimizeAssets(path.join(__dirname,'minihero-offline/shared-build'));
+for(const file of [root+'/build/app-0-_Askj9.js',root+'/shared-build/app-0-_Askj9.js'])require('./ofuscar-cliente.cjs').obfuscateFile(path.join(__dirname,file));

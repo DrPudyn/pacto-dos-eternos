@@ -79,29 +79,66 @@ function service(options={}){
   if(changed)persist();
  }
  function authenticate(req){const token=req.headers.cookie?.match(/(?:^|;\s*)mh_session=([a-f0-9]{64})(?:;|$)/)?.[1];const hash=token&&crypto.createHash('sha256').update(token).digest('hex');const s=db.sessions.find(s=>s.hash===hash&&s.expires>Date.now());return s&&db.users.find(u=>u.id===s.userId);}
- function result(res,status,value,headers={}){let data=Buffer.from(JSON.stringify(value));const encoding=res.mhAcceptEncoding??'';if(data.length>1024&&acceptsEncoding(encoding,'gzip')){data=gzipSync(data,{level:1});headers['Content-Encoding']='gzip';}res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',Vary:'Accept-Encoding','Content-Length':data.length,...headers});res.end(data);}
+ function result(res,status,value,headers={}){let data=Buffer.from(JSON.stringify(value));const encoding=res.mhAcceptEncoding??'';if(data.length>1024&&acceptsEncoding(encoding,'gzip')){data=gzipSync(data,{level:1});headers['Content-Encoding']='gzip';}res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY','Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=()','Cross-Origin-Resource-Policy':'same-origin',Vary:'Accept-Encoding','Content-Length':data.length,...(res.mhSecurity??{}),...headers});res.end(data);}
  async function body(req){let data='';for await(const chunk of req){data+=chunk;if(Buffer.byteLength(data)>2e6)throw Error('Requisição muito grande.');}return data?JSON.parse(data):{};}
  function publicListing(l){const u=db.users.find(u=>u.id===l.seller);return {id:l.id,seller:u?.name??'Jogador',mine:false,price:l.price,type:l.type??'hero',source:l.source,hero:l.hero,weapon:l.weapon?marketRules.publicWeapon(l.weapon):undefined};}
  function pruneNotices(at=clock()){for(let i=notices.length-1;i>=0;i--)if(!(notices[i].expiresAt>at))notices.splice(i,1);const live=new Set(notices.map(n=>n.id));for(const [id,seen] of noticeSeen){for(const noticeId of seen)if(!live.has(noticeId))seen.delete(noticeId);if(!seen.size)noticeSeen.delete(id);}}
  function publicNotices(user){pruneNotices();const seen=noticeSeen.get(user.id);return notices.filter(n=>!seen?.has(n.id)).map(({id,text,at,expiresAt})=>({id,text,at,expiresAt}));}
  function hostMachine(req){const host=/^(127\.0\.0\.1|localhost)(:\d+)?$/i.test(req.headers.host??'');const addr=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);const tunnel=req.headers['x-forwarded-for']||req.headers['x-forwarded-host']||req.headers.forwarded||req.headers['cf-connecting-ip']||req.headers['x-real-ip']||req.headers['ngrok-trace-id'];return host&&addr&&!tunnel;}
  function noticeTokenOk(req){const expected=options.noticeToken,got=req.headers['x-pacto-aviso'];if(typeof expected!=='string'||typeof got!=='string')return false;const a=Buffer.from(expected),b=Buffer.from(got);return a.length>=16&&a.length===b.length&&crypto.timingSafeEqual(a,b);}
+ // ngrok connects from this PC, so the socket is always loopback. The last
+ // X-Forwarded-For hop is the address ngrok actually saw.
+ function clientAddress(req){const sock=req.socket?.remoteAddress||'';if(sock==='127.0.0.1'||sock==='::1'||sock==='::ffff:127.0.0.1'){const raw=req.headers['x-forwarded-for'];if(typeof raw==='string'&&raw.length>0&&raw.length<400){const last=raw.split(',').map(part=>part.trim()).filter(Boolean).pop()||'';if(/^[0-9a-fA-F:.%]{3,64}$/.test(last))return last.toLowerCase();}}return sock||'local';}
+ function tooMany(key,limit,windowMs){const now=Date.now();if(attempts.size>4000)for(const [name,rate] of attempts)if(!(rate.until>now))attempts.delete(name);const old=attempts.get(key),rate=old&&old.until>now?old:{count:0,until:now+windowMs};rate.count++;attempts.set(key,rate);return rate.count>limit;}
+ function loginLocked(name){const rate=attempts.get('login-fail:'+name.toLocaleLowerCase());return !!rate&&rate.until>Date.now()&&rate.count>=10;}
+ function failLogin(name){const key='login-fail:'+name.toLocaleLowerCase(),now=Date.now(),old=attempts.get(key),rate=old&&old.until>now?old:{count:0,until:now+15*60*1000};rate.count++;attempts.set(key,rate);}
+ function clearLoginFailures(name){attempts.delete('login-fail:'+name.toLocaleLowerCase());}
+ function scryptKey(password,salt){return new Promise((resolve,reject)=>crypto.scrypt(password,salt,64,(err,key)=>err?reject(err):resolve(key)));}
+ const importCoinLimit=5_000_000_000;
+ function acceptedImport(state){
+  if(!state||typeof state!=='object'||Array.isArray(state))throw Error('Salvamento inválido.');
+  if(!Number.isSafeInteger(state.balance)||state.balance<0||state.balance>importCoinLimit*MILLION)throw Error('Salvamento inválido.');
+  const player=state.player;
+  if(!player||typeof player!=='object'||Array.isArray(player)||!Array.isArray(player.heroes)||player.heroes.length>500)throw Error('Salvamento inválido.');
+  const ids=new Set();
+  for(const hero of player.heroes){
+   if(!hero||typeof hero!=='object'||!Number.isSafeInteger(hero.id)||hero.id<1||ids.has(hero.id)||!Number.isSafeInteger(hero.rarity)||hero.rarity<0||hero.rarity>5)throw Error('Salvamento inválido.');
+   ids.add(hero.id);
+   for(const key of ['atk','atkSpd','dur'])if(hero[key]!==undefined&&(typeof hero[key]!=='number'||!Number.isFinite(hero[key])||hero[key]<0||hero[key]>250))throw Error('Salvamento inválido.');
+  }
+  if(player.blacksmiths!==undefined&&(!Array.isArray(player.blacksmiths)||player.blacksmiths.length>48||player.blacksmiths.some(item=>!item||!Number.isSafeInteger(item.tier)||item.tier<1||item.tier>6)))throw Error('Salvamento inválido.');
+  if(player.porters!==undefined&&(!Array.isArray(player.porters)||player.porters.length>100))throw Error('Salvamento inválido.');
+  for(const key of ['mintCards','weaponSummons'])if(player[key]!==undefined&&(!Number.isSafeInteger(player[key])||player[key]<0||player[key]>20000))throw Error('Salvamento inválido.');
+  if(player.chest!==undefined&&(!Number.isSafeInteger(player.chest)||player.chest<0||player.chest>importCoinLimit*MILLION))throw Error('Salvamento inválido.');
+  const gear=player.equipment;
+  if(gear!==undefined){
+   if(!gear||typeof gear!=='object'||Array.isArray(gear)||!Array.isArray(gear.weapons)||gear.weapons.length>1000)throw Error('Salvamento inválido.');
+   if(gear.embers!==undefined&&(!Number.isSafeInteger(gear.embers)||gear.embers<0||gear.embers>1000000))throw Error('Salvamento inválido.');
+   for(const weapon of gear.weapons)if(!weapon||!Number.isSafeInteger(weapon.rarity)||weapon.rarity<0||weapon.rarity>5||!Number.isSafeInteger(weapon.level)||weapon.level<0||weapon.level>10)throw Error('Salvamento inválido.');
+  }
+  let nextId=state.nextId;
+  if(!Number.isSafeInteger(nextId)||nextId<1||nextId>1e9)nextId=player.heroes.reduce((max,hero)=>Math.max(max,hero.id),0)+1;
+  const grants=state.grants&&typeof state.grants==='object'&&!Array.isArray(state.grants)?state.grants:{};
+  // Battle and ranking totals come from the server. A file cannot invent loot or a record.
+  return {player,balance:state.balance,nextId,grants};
+ }
  function isAdmin(user){return !!user?.canImport&&user.name?.toLocaleLowerCase()==='admin';}
  function ticketAdmin(user){return isAdmin(user);}
  function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true},equipment:equipment.view(e.player),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
- function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now());db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
+ function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now()&&s.userId!==user.id);db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
  async function handleRequest(req,res,url){
   if(!url.pathname.startsWith('/shared-api/'))return false;
   res.mhAcceptEncoding=req.headers['accept-encoding']??'';
+  if(req.headers['x-forwarded-proto']==='https')res.mhSecurity={'Strict-Transport-Security':'max-age=15552000'};
   try{
    applyPendingBonuses();
    applyPendingEvents();
    if(req.method!=='POST'&&req.method!=='GET'){result(res,405,{error:'Método inválido.'});return true;}
    if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host){result(res,403,{error:'Origem inválida.'});return true;}
    const route=url.pathname.slice('/shared-api/'.length),data=req.method==='POST'?await body(req):{};
+   if(tooMany('flood:'+clientAddress(req),180,10000)){result(res,429,{error:'Muitas requisições. Espere alguns segundos.'});return true;}
    if(advanceFestival(clock()))persist();
-   const localRequest=/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(req.headers.host??'')&&!req.headers['cf-connecting-ip']&&['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
-   if(route==='host-info'){result(res,localRequest?200:403,localRequest?{inviteCode:db.inviteCode}:{error:'Disponível somente no PC que hospeda.'});return true;}
+   if(route==='host-info'){const local=hostMachine(req);result(res,local?200:403,local?{inviteCode:db.inviteCode}:{error:'Disponível somente no PC que hospeda.'});return true;}
    if(route==='host/notice'){
     if(!hostMachine(req)||!noticeTokenOk(req)){result(res,403,{error:'Disponível somente no PC que hospeda.'});return true;}
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
@@ -113,37 +150,43 @@ function service(options={}){
    }
    if(route==='register'||route==='login'){
     if(req.method!=='POST'){result(res,405,{});return true;}
-    const ip=req.socket.remoteAddress,key=ip+':'+route,old=attempts.get(key),rate=old&&old.until>Date.now()?old:{count:0,until:Date.now()+60000};rate.count++;attempts.set(key,rate);if(rate.count>12){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
-    const name=typeof data.name==='string'?data.name.trim():'',password=data.password;
+    const addr=clientAddress(req),name=typeof data.name==='string'?data.name.trim():'',password=data.password;
+    if(route==='login'&&/^[\p{L}\p{N} _-]{2,20}$/u.test(name)&&loginLocked(name)){result(res,429,{error:'Muitas senhas incorretas. Aguarde 15 minutos.'});return true;}
+    if(tooMany('ip:'+addr+':'+route,12,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
     if(!/^[\p{L}\p{N} _-]{2,20}$/u.test(name)||typeof password!=='string'||password.length<8||password.length>128){result(res,400,{error:'Use um nome de 2 a 20 caracteres e senha de 8 a 128 caracteres.'});return true;}
     let user=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase());
     if(route==='login'&&user?.isBot){result(res,401,{error:'Este perfil é um jogador automático.'});return true;}
+    if(tooMany('scrypt',45,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
     if(route==='register'){
      if(user){result(res,409,{error:'Esse nome já está em uso.'});return true;}
-     const salt=crypto.randomBytes(16).toString('hex');const pass=(await new Promise((resolve,reject)=>crypto.scrypt(password,salt,64,(err,key)=>err?reject(err):resolve(key)))).toString('hex');
+     const salt=crypto.randomBytes(16).toString('hex'),pass=(await scryptKey(password,salt)).toString('hex');
      // First account made on the host may import its existing offline progress.
      if(db.users.some(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase())){result(res,409,{error:'Esse nome já está em uso.'});return true;}
-     const localHost=/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(req.headers.host??'')&&!req.headers['cf-connecting-ip'];
-     user={id:crypto.randomUUID(),name,salt,pass,canImport:!db.users.some(u=>u.canImport)&&localHost&&['127.0.0.1','::1','::ffff:127.0.0.1'].includes(ip),imported:true,state:null,tutorial:require('./tutorial-rules.cjs').create()};db.users.push(user);const starting=actor(user);starting.player.mintCards=0;starting.player.weaponSummons=0;
+     user={id:crypto.randomUUID(),name,salt,pass,canImport:!db.users.some(u=>u.canImport)&&hostMachine(req),imported:true,state:null,tutorial:require('./tutorial-rules.cjs').create()};db.users.push(user);const starting=actor(user);starting.player.mintCards=0;starting.player.weaponSummons=0;
     }else{
-     const key=await new Promise((resolve,reject)=>crypto.scrypt(password,user?.salt??'dummy',64,(err,key)=>err?reject(err):resolve(key)));
-     if(!user||!crypto.timingSafeEqual(key,Buffer.from(user.pass,'hex'))){result(res,401,{error:'Nome ou senha incorretos.'});return true;}
+     const key=await scryptKey(password,user?.salt??'dummy'),stored=user&&typeof user.pass==='string'&&/^[a-f0-9]{128}$/.test(user.pass)?Buffer.from(user.pass,'hex'):null;
+     if(!user||!stored||stored.length!==key.length||!crypto.timingSafeEqual(key,stored)){if(user)failLogin(name);result(res,401,{error:'Nome ou senha incorretos.'});return true;}
+     clearLoginFailures(name);
     }
     const headers=issue(user,req);result(res,200,payload(user),headers);return true;
    }
    if(route==='password-reset'){
     if(req.method!=='POST'){result(res,405,{});return true;}
-    const ip=req.socket.remoteAddress,key=ip+':password-reset',old=attempts.get(key),rate=old&&old.until>Date.now()?old:{count:0,until:Date.now()+60000};rate.count++;attempts.set(key,rate);if(rate.count>10){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    const addr=clientAddress(req);
+    if(tooMany('ip:'+addr+':password-reset',8,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
     const name=typeof data.name==='string'?data.name.trim():'',code=typeof data.code==='string'?data.code.trim().toUpperCase():'',password=data.password;
     if(!/^[\p{L}\p{N} _-]{2,20}$/u.test(name)||!/^[A-F0-9]{16}$/.test(code)||typeof password!=='string'||password.length<8||password.length>128){result(res,400,{error:'Confira o nome, o código e use uma nova senha de 8 a 128 caracteres.'});return true;}
+    if(tooMany('reset-name:'+name.toLocaleLowerCase(),5,15*60*1000)){result(res,429,{error:'Aguarde alguns minutos antes de tentar outro código.'});return true;}
     const target=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase()),digest=crypto.createHash('sha256').update(code).digest();
-    const saved=target?.passwordReset;
+    const saved=target&&!target.isBot?target.passwordReset:null;
     if(!saved||!Number.isFinite(saved.expiresAt)||saved.expiresAt<=clock()||typeof saved.hash!=='string'||!/^[a-f0-9]{64}$/.test(saved.hash)||!crypto.timingSafeEqual(digest,Buffer.from(saved.hash,'hex'))){result(res,400,{error:'Código inválido ou expirado. Peça um novo código ao dono do jogo.'});return true;}
-    const salt=crypto.randomBytes(16).toString('hex');target.salt=salt;target.pass=(await new Promise((resolve,reject)=>crypto.scrypt(password,salt,64,(err,key)=>err?reject(err):resolve(key)))).toString('hex');delete target.passwordReset;
+    if(tooMany('scrypt',45,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    const salt=crypto.randomBytes(16).toString('hex');target.salt=salt;target.pass=(await scryptKey(password,salt)).toString('hex');delete target.passwordReset;
     db.sessions=db.sessions.filter(s=>s.userId!==target.id);
     const headers=issue(target,req);result(res,200,payload(target),headers);return true;
    }
    const user=authenticate(req);if(!user){result(res,401,{error:'Entre no seu perfil para continuar.'});return true;}
+   if(tooMany('api:'+user.id,80,10000)){result(res,429,{error:'Muitas ações em seguida. Espere alguns segundos.'});return true;}
    if(route==='notice/dismiss'){
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
     const id=typeof data.id==='string'?data.id:'';
@@ -169,6 +212,7 @@ function service(options={}){
    if(route==='chat'){
     if(pruneChat())persist();
     if(req.method==='POST'){
+     if(tooMany('chat:'+user.id,12,10000)){result(res,429,{error:'Mensagens demais. Espere alguns segundos.'});return true;}
      const text=typeof data.text==='string'?data.text.trim():'',clientId=typeof data.clientId==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(data.clientId)?data.clientId:null;
      if(!text||text.length>240||/[\x00-\x1f\x7f]/.test(text)){result(res,400,{error:'Escreva uma mensagem de até 240 caracteres.'});return true;}
      const duplicate=clientId&&db.chatMessages.some(m=>m.userId===user.id&&m.clientId===clientId);
@@ -305,8 +349,8 @@ function service(options={}){
    if(req.method!=='POST'){result(res,405,{});return true;}
    if(route==='import'){
     if(!isAdmin(user)||user.imported||db.listings.some(l=>l.seller===user.id)){result(res,403,{error:'Importação disponível apenas uma vez para a conta ADMIN.'});return true;}
-    const s=data.state;if(!s||!Number.isSafeInteger(s.balance)||s.balance<0||!s.player||!Array.isArray(s.player.heroes)||s.player.heroes.length>500||!s.battle)throw Error('Salvamento inválido.');
-    const imported=createEngine(s,{codexBonuses:codex.bonuses(user),cleared:()=>user.campaign?.cleared,onCombat:event=>{festival.combat(user,event);if(event.farmMob)require('./creature-codex.cjs').discover(user,event.farmMob.region,event.farmMob.variant);}});imported.export();runtime.set(user.id,imported);user.imported=true;festival.updatePower(user,clock(),true);persist();result(res,200,payload(user));return true;
+    let imported;try{const clean=acceptedImport(data.state);imported=createEngine(clean,{codexBonuses:codex.bonuses(user),cleared:()=>user.campaign?.cleared,onCombat:event=>{festival.combat(user,event);if(event.farmMob)require('./creature-codex.cjs').discover(user,event.farmMob.region,event.farmMob.variant);}});imported.export();if(!Number.isSafeInteger(imported.engine.balance)||imported.engine.balance<0||imported.engine.balance>importCoinLimit*MILLION)throw Error('Salvamento inválido.');}catch{throw Error('Salvamento inválido.');}
+    runtime.set(user.id,imported);user.imported=true;festival.updatePower(user,clock(),true);persist();result(res,200,payload(user));return true;
    }
    if(route==='action'){
     if(!['state','heroes/activate','heroes/deactivate','heroes/work','heroes/rest','heroes/forge','heroes/leave-forge','blacksmith/in-service','blacksmith/out-of-service','porter/switch','summon/card','fusion/choose'].includes(data.route))throw Error('Ação inválida.');
