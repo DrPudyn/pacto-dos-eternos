@@ -26,4 +26,4 @@ Parte do cliente e dos recursos deriva dos arquivos públicos do Mini Hero, conf
 
 ## Prévia do farm top-down
 
-Com o servidor compartilhado em execução, abra `http://127.0.0.1:17841/farm-preview.html` para experimentar a prévia do mapa de farm. Ela mostra quatro heróis correndo, habilidades, mobs que reaparecem, drops de ouro e avanço automático entre clareiras. Esta prévia é um protótipo visual isolado; o fluxo atual de combate permanece disponível.
+Com o servidor local Mini Hero em execução, abra `http://127.0.0.1:17840/farm-preview.html` para experimentar a prévia do mapa de farm. Ela mostra quatro heróis correndo, habilidades, mobs que reaparecem, drops de ouro e avanço automático entre clareiras. Esta prévia é um protótipo visual isolado; o fluxo atual de combate permanece disponível.
