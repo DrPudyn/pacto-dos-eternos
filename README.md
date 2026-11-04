@@ -23,3 +23,7 @@ Os testes existentes ficam nos arquivos `testar-*.cjs`. Consulte cada teste ante
 ## Origem dos recursos
 
 Parte do cliente e dos recursos deriva dos arquivos públicos do Mini Hero, conforme `LEIA-ME.txt`. Os recursos permanecem pertencendo aos respectivos autores. Este repositório privado não atribui autoria exclusiva nem concede uma licença sobre materiais de terceiros.
+
+## Prévia do farm top-down
+
+Com o servidor local Mini Hero em execução, abra `http://127.0.0.1:17840/farm-preview.html` para experimentar a prévia do mapa de farm. Ela mostra quatro heróis correndo, habilidades, mobs que reaparecem, drops de ouro e avanço automático entre clareiras. Esta prévia é um protótipo visual isolado; o fluxo atual de combate permanece disponível.
