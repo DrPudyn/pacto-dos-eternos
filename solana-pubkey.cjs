@@ -1,5 +1,7 @@
 const crypto=require('crypto');
 const bs58=require('./bs58.cjs');
+const PROGRAMS=require('./solana-programs.cjs');
+const PDA_MARKER=Buffer.from('ProgramDerivedAddress');
 function decodeAddress(text){
  if(typeof text!=='string'||text.length<32||text.length>44)throw Error('Endereço inválido.');
  const bytes=bs58.decode(text);
@@ -12,18 +14,23 @@ function encodeAddress(bytes){
 }
 function findProgramAddress(seeds,programId){
  const program=decodeAddress(programId);
+ const parts=seeds.map(seed=>{
+  const buf=Buffer.isBuffer(seed)?seed:Buffer.from(seed);
+  if(buf.length>32)throw Error('Semente maior que 32 bytes.');
+  return buf;
+ });
  for(let bump=255;bump>=0;bump--){
-  const hash=crypto.createHash('sha256').update(Buffer.concat([...seeds.map(s=>Buffer.isBuffer(s)?s:Buffer.from(s)),Buffer.from([bump]),program]));
+  const hash=crypto.createHash('sha256').update(Buffer.concat([...parts,Buffer.from([bump]),program,PDA_MARKER]));
   const candidate=hash.digest();
   if(!isOnCurve(candidate))return {address:encodeAddress(candidate),bump,bytes:candidate};
  }
  throw Error('Não foi possível derivar endereço do programa.');
 }
-const {Point}=require('./vendor-noble-ed25519/index.js');
+const {ExtendedPoint}=require('./vendor-noble-ed25519/index.js');
 function isOnCurve(bytes){
- try{Point.fromHex(bytes);return true;}catch{return false;}
+ try{ExtendedPoint.fromHex(bytes);return true;}catch{return false;}
 }
-function associatedTokenAddress(ownerAddress,mintAddress,tokenProgram='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',ataProgram='ATokenGPvbdGVxr1b2dvdzs13Ldd6YcMNNbJp6YNn8p'){
+function associatedTokenAddress(ownerAddress,mintAddress,tokenProgram=PROGRAMS.TOKEN_PROGRAM_ID,ataProgram=PROGRAMS.ASSOCIATED_TOKEN_PROGRAM_ID){
  const owner=decodeAddress(ownerAddress);
  const mint=decodeAddress(mintAddress);
  const token=decodeAddress(tokenProgram);

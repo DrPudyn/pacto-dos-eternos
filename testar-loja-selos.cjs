@@ -1,5 +1,19 @@
-const assert=require('node:assert/strict'),crypto=require('crypto'),fs=require('fs'),os=require('os'),path=require('path'),http=require('http');
+const assert=require('node:assert/strict'),crypto=require('crypto'),fs=require('fs'),os=require('os'),path=require('path'),http=require('http'),vm=require('vm');
 const bs58=require('./bs58.cjs');
+const {decodeAddress,associatedTokenAddress}=require('./solana-pubkey.cjs');
+const PROGRAMS=require('./solana-programs.cjs');
+assert.equal(PROGRAMS.ASSOCIATED_TOKEN_PROGRAM_ID,'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+assert.equal(decodeAddress(PROGRAMS.SYSTEM_PROGRAM_ID).length,32);
+assert.ok(decodeAddress(PROGRAMS.SYSTEM_PROGRAM_ID).every(b=>b===0));
+assert.equal(bs58.encode(Buffer.alloc(32)),PROGRAMS.SYSTEM_PROGRAM_ID);
+for(const sample of [Buffer.alloc(32),Buffer.from([0,0,1,2,3]),Buffer.from([0,255]),crypto.randomBytes(32),crypto.randomBytes(64)]){
+ assert.deepEqual(bs58.decode(bs58.encode(sample)),sample);
+}
+assert.equal(associatedTokenAddress('CH5hxStZQZTLhXt7FD1okkeN6V2Dhq4QvD6XhJf1Ufgv','4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),'JA9gH9BEc8y2q7YN5VwyjnvwozqmurrUuw2ymFo1S8wu');
+const browser=vm.runInNewContext(fs.readFileSync('solana-spl-browser.js','utf8')+'\n({ata:mhSolanaAta,decode:mhSolanaDecode58,encode:mhSolanaEncode58,programs:MH_SOLANA_PROGRAMS})',{crypto,TextEncoder,Uint8Array,fetch});
+assert.equal(browser.programs.ASSOCIATED_TOKEN_PROGRAM_ID,PROGRAMS.ASSOCIATED_TOKEN_PROGRAM_ID);
+assert.equal(browser.decode(PROGRAMS.SYSTEM_PROGRAM_ID).length,32);
+assert.equal(browser.encode(new Uint8Array(32)),PROGRAMS.SYSTEM_PROGRAM_ID);
 const fakeSig=()=>bs58.encode(crypto.randomBytes(64));
 const {load,welcomePriceUsd,amountMicro}=require('./loja-config.cjs');
 const {verifyPayment}=require('./loja-tx-verify.cjs');
@@ -40,6 +54,7 @@ server.listen(0,'127.0.0.1',async()=>{
   return call(route,{...payload,address:fixture.address,message:challenge.value.message,signature});
  }
  try{
+  assert.equal(await browser.ata('CH5hxStZQZTLhXt7FD1okkeN6V2Dhq4QvD6XhJf1Ufgv','4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),'JA9gH9BEc8y2q7YN5VwyjnvwozqmurrUuw2ymFo1S8wu');
   const unit=createLojaService({config:lojaConfig,getTransaction:async(_rpc,sig)=>txMocks.get(sig)});
   const db={lojaOrders:[],lojaUsedSignatures:[]};
   const user={id:'u1',walletAddress:walletFixture().address,lojaPurchases:{}};
@@ -118,6 +133,6 @@ server.listen(0,'127.0.0.1',async()=>{
   assert.equal(usdt.status,400);
   assert.match(usdt.value.error,/USDC/);
 
-  console.log('OK: preços, só USDC, idempotência da assinatura, pedido único, RPC fora e pacote de boas-vindas.');
+  console.log('OK: preços, só USDC, ATA da devnet, idempotência da assinatura, pedido único, RPC fora e pacote de boas-vindas.');
  }catch(e){console.error(e);process.exitCode=1;}finally{server.close();try{app.close();}catch{}}
 });
