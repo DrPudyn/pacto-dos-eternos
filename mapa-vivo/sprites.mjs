@@ -55,6 +55,13 @@ function load(src) {
 
 const FOREST_OBJECTS = ['oak', 'birch', 'oak-sapling', 'birch-sapling', 'rocks', 'shrub', 'log', 'waystone'];
 
+// No cliente online a whitelist só entrega /shared-build. O jogo offline continua em /build.
+function spriteFolder() {
+  const path = globalThis.location?.pathname ?? '';
+  const shared = path === '/' || /(^|\/)compartilhado\.html$/.test(path) || /(^|\/)mapa-vivo\.html$/.test(path);
+  return shared ? '../shared-build/' : '../build/';
+}
+
 export function loadSprites(baseUrl) {
   const heroes = {};
   const mobs = {};
@@ -65,16 +72,17 @@ export function loadSprites(baseUrl) {
     jobs.push(item.ready);
     return item.image;
   };
+  const sheetRoot = spriteFolder();
   for (const [skin, sheets] of Object.entries(HERO_SHEETS)) {
     heroes[skin] = {};
     for (const [action, file] of Object.entries(sheets)) {
-      const item = load(new URL('../build/' + file, baseUrl).href);
+      const item = load(new URL(sheetRoot + file, baseUrl).href);
       heroes[skin][action] = item.image;
       jobs.push(item.ready);
     }
   }
   for (const [kind, file] of Object.entries(MOB_SHEETS)) {
-    const item = load(new URL('../build/' + file, baseUrl).href);
+    const item = load(new URL(sheetRoot + file, baseUrl).href);
     mobs[kind] = item.image;
     jobs.push(item.ready);
   }

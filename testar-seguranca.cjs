@@ -31,11 +31,21 @@ server.listen(0,'127.0.0.1',async()=>{
   assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
   assert.match(home.headers.get('content-security-policy'),/script-src 'self'/);
   assert.equal(home.headers.get('cross-origin-resource-policy'),'same-origin');
-  for(const forbidden of ['/servidor-compartilhado.cjs','/shared-service.cjs','/.git/config','/dados-compartilhados/jogadores.json','/etc/passwd','/shared-build/../servidor-compartilhado.cjs','/shared-build/%2e%2e%2f%2e%2e%2fservidor-compartilhado.cjs','/shared-build/..%2f..%2fservidor-compartilhado.cjs','/shared-build/....']){
+  for(const forbidden of ['/servidor-compartilhado.cjs','/shared-service.cjs','/.git/config','/dados-compartilhados/jogadores.json','/etc/passwd','/shared-build/../servidor-compartilhado.cjs','/shared-build/%2e%2e%2f%2e%2e%2fservidor-compartilhado.cjs','/shared-build/..%2f..%2fservidor-compartilhado.cjs','/shared-build/....','/mapa-vivo/floresta/exportar.py','/mapa-vivo/../servidor-compartilhado.cjs','/mapa-vivo/floresta/../../servidor-compartilhado.cjs','/mapa-vivo/%2e%2e/%2e%2e/servidor-compartilhado.cjs','/build/app-0-_Askj9.js']){
    const hidden=await page(forbidden);
    assert.equal(hidden.status,404,forbidden);
    assert.doesNotMatch(hidden.body,/noticeToken|CREATE TABLE|function service/);
   }
+  const mapPage=await page('/mapa-vivo.html');
+  assert.equal(mapPage.status,200);
+  assert.match(mapPage.headers.get('content-type'),/text\/html/);
+  const mapScript=await page('/mapa-vivo/boot.mjs');
+  assert.equal(mapScript.status,200);
+  assert.match(mapScript.headers.get('content-type'),/javascript/);
+  assert.equal((await page('/mapa-vivo/floresta/chao-0.png')).status,200);
+  assert.equal((await page('/mapa-vivo/floresta/colisao.json')).status,200);
+  assert.equal((await page('/mapa-vivo/mapa-vivo.css')).status,200);
+  assert.equal((await page('/shared-build/swordsman-idle-BZoYeDgg.png')).status,200);
   const securePage=await page('/',{'x-forwarded-proto':'https'});
   assert.equal(securePage.headers.get('strict-transport-security'),'max-age=15552000');
 

@@ -11,17 +11,29 @@ function partyFromGame() {
 }
 
 function ensureStyle() {
-  if (document.querySelector('link[data-mapa-vivo]')) return;
+  const current = document.querySelector('link[data-mapa-vivo]');
+  if (current?.sheet) return Promise.resolve();
+  if (current) {
+    return new Promise(resolve => {
+      current.addEventListener('load', () => resolve(), {once: true});
+      current.addEventListener('error', () => resolve(), {once: true});
+    });
+  }
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = new URL('./mapa-vivo.css', import.meta.url).href;
   link.dataset.mapaVivo = '1';
+  const ready = new Promise(resolve => {
+    link.addEventListener('load', () => resolve(), {once: true});
+    link.addEventListener('error', () => resolve(), {once: true});
+  });
   document.head.append(link);
+  return ready;
 }
 
-function openOverlay() {
+async function openOverlay() {
   if (document.querySelector('.mapa-vivo')) return;
-  ensureStyle();
+  await ensureStyle();
   mountLivingMap(document.body, {party: partyFromGame(), onClose() {}});
 }
 

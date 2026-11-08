@@ -18,6 +18,13 @@ function el(tag, className, text) {
 export function mountLivingMap(parent, options = {}) {
   const root = el('section', 'mapa-vivo');
   root.setAttribute('aria-label', 'Mapa vivo');
+  // O clique abre o mapa antes da folha de estilo terminar. Sem isto a seção
+  // nasce no fluxo da página e o canvas fica numa faixa.
+  root.style.position = 'fixed';
+  root.style.inset = '0';
+  root.style.zIndex = '2147483000';
+  root.style.background = '#10241c';
+  root.style.overflow = 'hidden';
   const canvas = el('canvas', 'view');
   canvas.setAttribute('aria-label', 'Heróis avançando pelo mapa. A câmera segue o grupo.');
   const hud = el('div', 'mapa-hud');
@@ -119,6 +126,8 @@ export function mountLivingMap(parent, options = {}) {
   const onResize = () => resize();
   window.addEventListener('resize', onResize);
   resize();
+  // O overlay entra antes do layout assentar. Um frame depois a seção já ocupa a tela.
+  requestAnimationFrame(() => resize());
   // ?t=12 adianta a simulação para revisar um instante. Sem o parâmetro, o mapa corre em tempo real.
   const seek = Number(params.get('t') || 0);
   if (!mockup && seek > 0) {
