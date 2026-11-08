@@ -114,7 +114,7 @@ server.listen(0,'127.0.0.1',async()=>{
 
   const bundle=fs.readFileSync(path.join(root,'shared-build/app-0-_Askj9.js'),'utf8');
   assert.equal(bundle.includes('function mhInstallLanguage'),false);
-  assert.equal(bundle.includes('shared-name'),true);
+  assert.equal(bundle.includes('shared-wallet-connect'),true);
   assert.equal(bundle.includes('MENSAGEM DO PACTO'),true);
   console.log('OK: contas, aviso local, arquivos, trapaça e cliente ofuscado.');
  }catch(error){console.error(error);process.exitCode=1;}finally{try{app.close();}catch{}server.close();}

@@ -19,7 +19,7 @@ async function getAccessLink({fresh=false}={}){
   for(let i=0;i<90;i++){if(fs.existsSync(accessLog))url=fs.readFileSync(accessLog,'utf8').match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)?.[0];if(url)break;if(!alive(id))throw Error('O túnel encerrou. Consulte tunel-acesso.log.');await wait(500);}
  }
  if(!url)throw Error('O provedor ainda não devolveu o link. Tente novamente ou consulte tunel-acesso.log.');
- fs.writeFileSync(linkFile,url+'\r\n\r\nO PC e o túnel precisam ficar ligados. O cadastro exige apenas nome e senha.\r\n');
+ fs.writeFileSync(linkFile,url+'\r\n\r\nO PC e o túnel precisam ficar ligados. O cadastro usa carteira Solana (assinatura gratuita, sem transação).\r\n');
  fs.writeFileSync(path.join(root,'LINK PARA MEU AMIGO.txt'),url+'\r\n');
  return url;
 }
@@ -31,7 +31,7 @@ async function main(){
   }return;
  }
  const url=await getAccessLink();
- console.log('\nLINK PARA COMPARTILHAR:\n'+url+'\n\nNo seu PC: http://127.0.0.1:17841\nO cadastro exige apenas nome e senha.\nO link pode mudar quando o túnel reiniciar.');
+ console.log('\nLINK PARA COMPARTHAR:\n'+url+'\n\nNo seu PC: http://127.0.0.1:17841\nO cadastro usa carteira Solana (assinatura gratuita, sem transação).\nO link pode mudar quando o túnel reiniciar.');
 }
 if(require.main===module)main().catch(e=>{console.error(e.message);process.exitCode=1;});
 module.exports={getAccessLink};

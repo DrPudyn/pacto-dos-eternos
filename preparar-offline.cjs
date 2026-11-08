@@ -99,7 +99,7 @@ let patched=original.replace('$E(sT);export{Jp as t};',adapter+'\nexport{Jp as t
 patched=patched.replace('Paid from your wallet, with a studio fee of ${qo(BigInt(_n(fx)))} SOL.','Pago com saldo local fictício. Sem taxas ou carteira.');
 patched=patched.replaceAll('Paid from your wallet, with a studio fee of ${qo(BigInt(hn))} SOL.','Pago com saldo local fictício.');
 fs.writeFileSync(target,patched);
-const shared=skillClient+'\nvar mhReleaseNotes='+JSON.stringify(require('./release-notes.cjs'))+';\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('campaign-client.js','utf8')+'\n'+fs.readFileSync('shared-adapter.js','utf8').replaceAll('MHDG','Ouro')+'\n'+fs.readFileSync('tower-client.js','utf8')+'\n'+fs.readFileSync('codex-client.js','utf8')+'\n'+fs.readFileSync('festival-client.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
+const shared=skillClient+'\nvar mhReleaseNotes='+JSON.stringify(require('./release-notes.cjs'))+';\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('solana-wallet-client.js','utf8')+'\n'+fs.readFileSync('campaign-client.js','utf8')+'\n'+fs.readFileSync('shared-adapter.js','utf8').replaceAll('MHDG','Ouro')+'\n'+fs.readFileSync('tower-client.js','utf8')+'\n'+fs.readFileSync('codex-client.js','utf8')+'\n'+fs.readFileSync('festival-client.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
 require('./assets/arqueiro/desenhar-arqueiro.cjs').draw(path.join(__dirname,'assets/arqueiro'));
 for(const [src,dst] of [['archer-idle.png','archer-idle-P3SxISc4.png'],['archer-walk.png','archer-walk-BSlfYEZv.png'],['archer-attack.png','archer-attack-ClxIWz7r.png']]){
   const from=path.join(__dirname,'assets/arqueiro',src);
