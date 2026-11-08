@@ -100,7 +100,8 @@ function obfuscateFile(file){
  const moduleFile=/\b(?:import|export)\b/.test(output);
  const check=spawnSync(process.execPath,moduleFile?['--check','--input-type=module']:['--check',tmp],{input:moduleFile?output:undefined,encoding:'utf8'});
  if(check.status!==0){fs.unlinkSync(tmp);throw Error('A ofuscação quebrou '+file+': '+(check.stderr||check.stdout));}
- fs.renameSync(tmp,file);
+ // No Windows, rename não substitui um arquivo existente (EPERM/EEXIST).
+ try{fs.renameSync(tmp,file);}catch(e){if(e.code!=='EPERM'&&e.code!=='EEXIST'&&e.code!=='EBUSY')throw e;fs.copyFileSync(tmp,file);fs.unlinkSync(tmp);}
  const before=source.length,after=output.length;
  console.log('Cliente ofuscado: '+file+' ('+before+' → '+after+' bytes).');
 }

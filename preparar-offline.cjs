@@ -130,8 +130,10 @@ for(const [src,dst] of [['swordsman-idle.png','swordsman-idle-BZoYeDgg.png'],['s
   }
 }
 fs.mkdirSync(root+'/shared-build',{recursive:true});
-for(const file of fs.readdirSync(root+'/build'))if(file!=='shared-app.js')fs.copyFileSync(root+'/build/'+file,root+'/shared-build/'+file);
-fs.writeFileSync(root+'/shared-build/app-0-_Askj9.js',original.replace('$E(sT);export{Jp as t};',shared+'\nexport{Jp as t};'));
+for(const file of fs.readdirSync(root+'/build'))if(file!=='shared-app.js'&&file!=='app-0-_Askj9.js')fs.copyFileSync(root+'/build/'+file,root+'/shared-build/'+file);
+const sharedApp=original.replace('$E(sT);export{Jp as t};',shared+'\nexport{Jp as t};');
+if(sharedApp===original||!sharedApp.includes('function installLoja')||!sharedApp.includes("text:'LOJA'")||!sharedApp.includes('hud-loja'))throw Error('O bundle compartilhado ficou sem o botão LOJA. O jogo offline não substitui o shared-build.');
+fs.writeFileSync(root+'/shared-build/app-0-_Askj9.js',sharedApp);
 let offlineHtml=fs.readFileSync(root+'/index.html','utf8');
 if(!offlineHtml.includes('eternal-menus.css'))offlineHtml=offlineHtml.replace('</head>','<link rel="stylesheet" href="./build/eternal-menus.css"></head>');
 offlineHtml=offlineHtml.replace(/<title>[^<]*<\/title>/,'<title>Pacto dos Eternos</title>');
@@ -159,3 +161,8 @@ fs.copyFileSync('assets/campaign-bestiary/bestiario-pixel.js','minihero-offline/
 for(const name of fs.readdirSync('assets/battle-arenas').filter(n=>/^battle-arena-.*\.png$/.test(n)))for(const dir of ['minihero-offline/build','minihero-offline/shared-build'])fs.copyFileSync('assets/battle-arenas/'+name,dir+'/'+name);
 require('./otimizar-assets.cjs').optimizeAssets(path.join(__dirname,'minihero-offline/shared-build'));
 for(const file of [root+'/build/app-0-_Askj9.js',root+'/shared-build/app-0-_Askj9.js'])require('./ofuscar-cliente.cjs').obfuscateFile(path.join(__dirname,file));
+const shipped=fs.readFileSync(root+'/shared-build/app-0-_Askj9.js','utf8');
+if(!shipped.includes('hud-loja')||!shipped.includes('LOJA DOS ETERNOS')||!shipped.includes('loja-saco.png')||shipped.includes('hudAllowed'))throw Error('A ofuscação do shared-build removeu o botão LOJA.');
+const page=fs.readFileSync(root+'/compartilhado.html','utf8');
+if(!page.includes('./shared-build/app-0-_Askj9.js')||!page.includes('/shared-build/loja.css'))throw Error('compartilhado.html não aponta para o shared-build da loja.');
+if(fs.readFileSync(root+'/build/app-0-_Askj9.js','utf8').includes('function installLoja'))throw Error('O bundle offline recebeu a loja do modo compartilhado.');
