@@ -2,6 +2,17 @@ function mhLojaUsd(n){return 'US$ '+Number(n).toFixed(2);}
 function mhLojaToken(amountMicro,decimals){return (amountMicro/10**decimals).toFixed(2);}
 function installLoja({root,getCurrent,perform,getWallet}){
  let panel=null;
+ function hudAllowed(){const tutorial=getCurrent()?.tutorial;return !!(tutorial?.completed||tutorial?.legacyStarter);}
+ function syncHud(){
+  const existing=document.getElementById('hud-loja');
+  if(!hudAllowed()){existing?.remove();return;}
+  if(existing)return;
+  const button=J('button',{class:'hud-loja',attrs:{id:'hud-loja',type:'button','aria-label':'Abrir loja','data-no-translate':'true'}},
+   J('img',{class:'hud-loja-art',attrs:{src:new URL('./loja-saco.png',import.meta.url).href,alt:'',draggable:'false'}}),
+   J('span',{text:'LOJA'}));
+  button.onclick=()=>open();
+  document.body.append(button);
+ }
  const arts={
   character:new URL('./loja-selo.png',import.meta.url).href,
   weapon:new URL('./loja-arma.png',import.meta.url).href,
@@ -99,7 +110,8 @@ function installLoja({root,getCurrent,perform,getWallet}){
    if(soon){message.textContent='Pagamentos on-chain em breve.';for(const btn of payRow.querySelectorAll('.loja-pay'))btn.disabled=true;}
   });
  }
- return {open,refresh:()=>panel?null:null};
+ syncHud();
+ return {open,refresh:()=>panel?null:null,sync:syncHud};
 }
 async function mhSolanaSendPayment(provider,bytes,rpc){
  const tx={serialize:()=>bytes,signatures:[]};

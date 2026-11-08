@@ -1,5 +1,5 @@
 // The island is a navigation layer; existing screens retain their original actions.
-function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign,openLoja,showLoja}){
+function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign}){
  if(root.querySelector('.refuge-world'))return;
  const lobby=root.querySelector('#lobby');if(!lobby)return;
  root.classList.add('has-refuge');
@@ -27,14 +27,8 @@ function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign,
   const b=J('button',{class:'refuge-destination refuge-'+kind,attrs:{type:'button'},style:{left:x+'%',top:y+'%'}},J('span',{text:label}));
   b.onclick=fn;nav.append(b);
  }
- const openShop=()=>{ex();openLoja?.();};
- const shop=J(showLoja?'button':'div',{class:'refuge-shop-isle'+(showLoja?'':' is-locked'),attrs:showLoja?{type:'button','aria-label':'Abrir loja'}:{'aria-hidden':'true'}},
-  J('span',{class:'refuge-shop-label',attrs:{'data-no-translate':'true'},text:'LOJA'}));
- if(showLoja)shop.onclick=openShop;
- nav.append(shop);
  const mobileNav=J('nav',{class:'refuge-mobile-nav',attrs:{'aria-label':'Destinos para celular'}});
- const mobileDestinations=showLoja?[['LOJA',0,0,openShop,'store'],...destinations]:destinations;
- for(const [label,x,y,fn,kind]of mobileDestinations){const button=J('button',{class:'refuge-mobile-link refuge-mobile-'+kind,attrs:{type:'button'},text:label});button.onclick=fn;mobileNav.append(button);}world.append(mobileNav);
+ for(const [label,x,y,fn,kind]of destinations){const button=J('button',{class:'refuge-mobile-link refuge-mobile-'+kind,attrs:{type:'button'},text:label});button.onclick=fn;mobileNav.append(button);}world.append(mobileNav);
  const themes={HEROES:'heroes',HERÓIS:'heroes',BLACKSMITHS:'forge',FORJAS:'forge',AJUDANTE:'forge',LÚMINA:'forge',PORTER:'forge',MARKET:'market',MERCADO:'market',SHOP:'market',LOJA:'market','RANKING FESTIVAL':'ranking',SUMMON:'summon',ARMAMENTOS:'summon',FUSION:'summon'};
  const interiorCanvases=new WeakMap();
  function decorate(){for(const page of root.querySelectorAll('.page')){const theme=themes[page.getAttribute('aria-label')];if(theme&&page.dataset.refugeTheme!==theme){page.dataset.refugeTheme=theme;page.style.setProperty('--refuge-interior','url("'+asset(theme)+'")');const c=J('canvas',{class:'refuge-interior-effects',attrs:{width:'836',height:'471','aria-hidden':'true'}});page.append(c);interiorCanvases.set(page,c);}}}

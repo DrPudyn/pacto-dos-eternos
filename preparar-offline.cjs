@@ -1,7 +1,6 @@
 const fs=require('fs'),path=require('path');
 try{require('./gerar-loja-icone.cjs');}catch(e){console.warn('Ícones da loja:',e.message);}
 try{require('./gerar-loja-artes.cjs').main();}catch(e){console.warn('Artes da loja:',e.message);}
-try{require('./gerar-ilha-loja.cjs').main();}catch(e){console.warn('Ilha da loja:',e.message);}
 const root='minihero-offline';
 const target=root+'/build/app-0-_Askj9.js';
 for(const name of fs.readdirSync(root+'/build').filter(n=>n.endsWith('.css'))){const file=root+'/build/'+name;fs.writeFileSync(file,require('./local-economy-ui.cjs').updateEconomyStyles(fs.readFileSync(file,'utf8')));}

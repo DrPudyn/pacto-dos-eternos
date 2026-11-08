@@ -41,5 +41,13 @@
 .loja-pay:disabled{cursor:default;opacity:.55}
 .loja-message{min-height:1.2em;margin:0;text-align:center;color:#6a3e12;font:16px 'Pixelify Sans',sans-serif}
 .loja-soon{padding:32px;text-align:center;color:#6b4e32;font:22px 'Jersey 10',sans-serif;letter-spacing:.16em}
-.refuge-mobile-store::before{content:'◆ ';color:#ffd56a}
+.hud-loja{position:fixed;z-index:95;left:196px;right:auto;bottom:24px;width:78px;height:86px;display:none;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;border:0;background:none;color:#fff4ce;padding:0;cursor:pointer;filter:drop-shadow(3px 4px 0 #080a11);font:20px 'Jersey 10',sans-serif;text-shadow:2px 2px #111;transform:none}
+.hud-loja-art{display:block;width:70px;height:66px;object-fit:contain;image-rendering:pixelated;transition:transform .15s;pointer-events:none}
+.hud-loja:hover .hud-loja-art{transform:translateY(-4px)}
+.hud-loja:focus-visible{outline:2px solid #e0ba71;outline-offset:4px}
+body:has(#app.shared-lobby):not(:has(.page:not([hidden]))):not(:has(.shared-login)) .hud-loja{display:flex}
+body:has(#app[data-screen]:not([data-screen="lobby"])) .hud-loja,body:has(#app[data-page]) .hud-loja,body:has(.tower-screen) .hud-loja,body:has(#modal-root:not(:empty)) .hud-loja,body:has(.campaign-screen) .hud-loja,body:has(.gear-modal-backdrop) .hud-loja{display:none!important}
+@media(max-width:900px){.hud-loja{left:181px}}
+@media(max-width:700px){body:not(:has(#app.has-refuge)) .hud-loja{left:165px;bottom:14px;transform:scale(.88);transform-origin:bottom left}}
+@media(prefers-reduced-motion:reduce){.hud-loja-art{transition:none}}
 @media(max-width:720px){.loja-dialog.eternal-menu.panel{width:calc(100vw - 16px)}.loja-ware{grid-template-columns:88px minmax(0,1fr);}.loja-ware-art,.loja-ware-art img{width:80px;height:80px}.loja-ware-price{grid-column:2;justify-items:start;min-width:0}.loja-pay-row{grid-template-columns:1fr}.loja-ware-copy strong,.loja-ware-price b{font-size:24px}}
