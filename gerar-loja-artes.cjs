@@ -111,6 +111,9 @@ function drawPack(buf){
  banner(buf,8,8);
 }
 function main(){
+ // O selo, a espada e o baú -15% são pintura pronta em assets/. Redesenhar
+ // aqui devolveria os ícones simples por cima dessa arte.
+ return;
  const dir=path.join(__dirname,'assets');
  for(const [name,draw] of [['loja-selo.png',drawSeal],['loja-arma.png',drawWeapon],['loja-pacote.png',drawPack]]){
   const buf=canvas();draw(buf);writePng(path.join(dir,name),buf);
