@@ -78,6 +78,10 @@ function createAtaIdempotentIx(payer,owner,mint,ata){
   {pubkey:PROGRAMS.TOKEN_PROGRAM_ID,isSigner:false,isWritable:false},
  ]};
 }
+function extraAccount(extra){
+ if(typeof extra==='string')return {pubkey:extra,isSigner:false,isWritable:false};
+ return {pubkey:extra.pubkey,isSigner:!!extra.isSigner,isWritable:!!extra.isWritable};
+}
 function transferCheckedIx(source,mint,destination,owner,amountMicro,decimals,extraReadonly=[]){
  const data=Buffer.alloc(10);
  data[0]=12;
@@ -88,7 +92,7 @@ function transferCheckedIx(source,mint,destination,owner,amountMicro,decimals,ex
   {pubkey:mint,isSigner:false,isWritable:false},
   {pubkey:destination,isSigner:false,isWritable:true},
   {pubkey:owner,isSigner:true,isWritable:false},
-  ...extraReadonly.map(pubkey=>({pubkey,isSigner:false,isWritable:false})),
+  ...extraReadonly.map(extraAccount),
  ]};
 }
 function buildLojaPayment({payer,receiver,sourceAta,destAta,mint,amountMicro,decimals,reference,blockhash}){
@@ -101,4 +105,37 @@ function buildLojaPayment({payer,receiver,sourceAta,destAta,mint,amountMicro,dec
   ],
  });
 }
-module.exports={compileTransaction,createAtaIdempotentIx,transferCheckedIx,buildLojaPayment,encodeCompactU16};
+function messageBytes(wire){
+ const bytes=Buffer.isBuffer(wire)?wire:Buffer.from(wire);
+ if(bytes.length<1)throw Error('Transação incompleta.');
+ const count=bytes[0];
+ if(count>=128||bytes.length<1+count*64+3)throw Error('Transação incompleta.');
+ return bytes.subarray(1+count*64);
+}
+// A referência entra como assinante somente-leitura. O programa de token ignora a conta extra;
+// a runtime exige a assinatura. Sem essa assinatura, a mensagem do servidor não entra na rede.
+function buildBazarPayment({payer,sellerWallet,developerWallet,sellerAta,developerAta,payerAta,mint,sellerMicro,feeMicro,reference,blockhash}){
+ const referenceAccount={pubkey:reference,isSigner:true,isWritable:false};
+ const wire=compileTransaction({
+  feePayer:payer,
+  recentBlockhash:blockhash,
+  instructions:[
+   createAtaIdempotentIx(payer,sellerWallet,mint,sellerAta),
+   createAtaIdempotentIx(payer,developerWallet,mint,developerAta),
+   transferCheckedIx(payerAta,mint,sellerAta,payer,sellerMicro,6,[referenceAccount]),
+   transferCheckedIx(payerAta,mint,developerAta,payer,feeMicro,6,[referenceAccount]),
+  ],
+ });
+ const message=messageBytes(wire);
+ if(wire[0]!==2||message[0]!==2||message[1]!==1)throw Error('A transação do bazar precisa da assinatura do comprador e da reserva.');
+ return wire;
+}
+function partialBazarWire(message,referenceSignature){
+ const msg=Buffer.isBuffer(message)?message:Buffer.from(message,'base64');
+ const sig=Buffer.isBuffer(referenceSignature)?referenceSignature:Buffer.from(referenceSignature,'base64');
+ if(sig.length!==64||msg[0]!==2||msg[1]!==1)throw Error('Assinatura de reserva inválida.');
+ const slots=Buffer.alloc(128);
+ sig.copy(slots,64);
+ return Buffer.concat([Buffer.from([2]),slots,msg]);
+}
+module.exports={compileTransaction,createAtaIdempotentIx,transferCheckedIx,buildLojaPayment,buildBazarPayment,messageBytes,partialBazarWire,encodeCompactU16};

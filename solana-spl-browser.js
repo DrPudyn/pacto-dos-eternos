@@ -112,12 +112,12 @@ function mhSolanaTransferCheckedIx(source,mint,destination,owner,amountMicro,dec
  ]};
 }
 const MH_SOLANA_RPC_FAIL='A rede Solana não respondeu. Tente novamente em instantes.';
-async function mhSolanaRpc(method,params){
+async function mhSolanaRpc(method,params,path){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),20000);
  let res,body;
  try{
-  res=await fetch('/shared-api/loja/rpc',{method:'POST',credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+  res=await fetch(path||'/shared-api/loja/rpc',{method:'POST',credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
   body=await res.json();
  }catch{throw Error(MH_SOLANA_RPC_FAIL);}
  finally{clearTimeout(timeout);}
@@ -143,4 +143,28 @@ async function mhSolanaBuildLojaTx(order,payer){
    mhSolanaTransferCheckedIx(sourceAta,order.paymentMint,order.destinationAta,payer,order.amountMicro,order.decimals,[order.reference]),
   ],
  });
+}
+function mhSolanaWireMessage(wire){
+ const count=wire[0]&0x7f;
+ return wire.slice(1+count*64);
+}
+// O jogo autoriza a mensagem e o bloco. O navegador só pede à carteira que assine esse wire.
+async function mhSolanaBuildBazarTx(order,payer){
+ if(!order?.transaction||order.sellerMicro+order.feeMicro!==order.priceMicro)throw Error('Pedido sem a transação autorizada pelo jogo. Reserve o anúncio de novo.');
+ if(payer&&order.payer&&payer!==order.payer)throw Error('A transação autorizada é da carteira vinculada a este perfil.');
+ const raw=atob(order.transaction);
+ const wire=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)wire[i]=raw.charCodeAt(i)&255;
+ if(wire[0]!==2)throw Error('A transação autorizada está incompleta. Reserve o anúncio de novo.');
+ let signed=false;
+ for(let i=65;i<129;i++)if(wire[i]!==0)signed=true;
+ if(!signed)throw Error('A transação autorizada está incompleta. Reserve o anúncio de novo.');
+ return wire;
+}
+async function mhSolanaNetworkFee(wire){
+ const message=mhSolanaWireMessage(wire);
+ let binary='';
+ for(const byte of message)binary+=String.fromCharCode(byte);
+ const result=await mhSolanaRpc('getFeeForMessage',[btoa(binary),{commitment:'confirmed'}],'/shared-api/bazar-usdc/rpc');
+ return Number.isInteger(result?.value)?result.value:null;
 }
