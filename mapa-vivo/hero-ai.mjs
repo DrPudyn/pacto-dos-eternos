@@ -4,11 +4,12 @@
 import {CHUNK_W, TILE} from './constantes.mjs';
 import {findPath} from './pathfinding.mjs';
 
+// O espadachim vai na frente. Os outros ficam um passo atrás, em cima do caminho.
 export const FORMATION = [
   {x: 0, y: 0},
-  {x: -34, y: -18},
-  {x: -34, y: 20},
-  {x: -62, y: 0}
+  {x: -24, y: -4},
+  {x: -47, y: 6},
+  {x: -64, y: 0}
 ];
 
 function distance(a, b) {
@@ -87,7 +88,7 @@ export class HeroAI {
     }
     const door = world.progression.doorObjective(leader);
     if (door && index === 0) return {x: door.x, y: door.y};
-    const ahead = world.progression.waypointAhead(index === 0 ? hero : leader, index === 0 ? 150 : 40);
+    const ahead = world.progression.waypointAhead(index === 0 ? hero : leader, index === 0 ? 72 : 28);
     return {
       x: ahead.x + FORMATION[index].x,
       y: ahead.y + FORMATION[index].y
@@ -104,7 +105,7 @@ export class HeroAI {
       hero._gx = gx;
       hero._gy = gy;
       const blocked = (x, y) => world.map.blocked(x, y);
-      const path = findPath(blocked, {x: Math.floor(hero.x / TILE), y: Math.floor(hero.y / TILE)}, {x: gx, y: gy}, 18);
+      const path = findPath(blocked, {x: Math.floor(hero.x / TILE), y: Math.floor(hero.y / TILE)}, {x: gx, y: gy}, 22);
       hero.path = path ? path.slice(1) : [];
     }
     let dest = goal;
@@ -132,6 +133,7 @@ export class HeroAI {
     if (foe.hp <= 0) {
       foe.hp = 0;
       foe.dead = true;
+      foe.respawn = 6.5;
       this.world.kills++;
       // Ouro deste mapa é só visual. Não entra no baú, no save nem na loja.
       this.world.gold += 8 + Math.floor(hero.x / (CHUNK_W * TILE));
@@ -148,8 +150,8 @@ export class HeroAI {
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const gap = Math.hypot(dx, dy) || 0.01;
-        if (gap >= 16) continue;
-        const push = (16 - gap) / 2;
+        if (gap >= 9) continue;
+        const push = (9 - gap) / 2;
         const nx = dx / gap * push;
         const ny = dy / gap * push;
         if (collision.fits(a.x - nx, a.y - ny)) {
@@ -174,7 +176,21 @@ export class MobAI {
     const world = this.world;
     const heroes = living(world.heroes);
     for (const mob of world.mobs) {
-      if (mob.dead || mob.hp <= 0) continue;
+      if (mob.dead || mob.hp <= 0) {
+        mob.respawn = (mob.respawn ?? 6.5) - dt;
+        if (mob.respawn > 0) continue;
+        const crowded = heroes.some(hero => distance(hero, {x: mob.homeX, y: mob.homeY}) < 40);
+        if (crowded) {
+          mob.respawn = 0.8;
+          continue;
+        }
+        mob.dead = false;
+        mob.hp = mob.maxHp;
+        mob.x = mob.homeX;
+        mob.y = mob.homeY;
+        mob.hit = 0;
+        world.respawns = (world.respawns ?? 0) + 1;
+      }
       mob.hit = Math.max(0, (mob.hit ?? 0) - dt);
       mob.phase = (mob.phase ?? 0) + dt;
       const prey = heroes.filter(hero => world.interior ? !!mob.interior : !mob.interior)
@@ -182,7 +198,7 @@ export class MobAI {
           const gap = distance(mob, hero);
           return !best || gap < best.gap ? {hero, gap} : best;
         }, null);
-      const sense = world.interior ? 900 : 150;
+      const sense = world.interior ? 900 : 96;
       if (prey && prey.gap < sense) {
         mob.mode = 'chase';
         world.movement.steer(mob, prey.hero, mob.speed, dt);
@@ -190,11 +206,11 @@ export class MobAI {
         mob.mode = 'wander';
         mob.wander = (mob.wander ?? 1) - dt;
         if (mob.wander <= 0) {
-          mob.wander = 1.4;
-          const angle = ((mob.chunk * 13 + mob.tx * 7 + Math.floor(world.time)) % 8) / 8 * Math.PI * 2;
-          mob.spot = {x: mob.homeX + Math.cos(angle) * 18, y: mob.homeY + Math.sin(angle) * 14};
+          mob.wander = 1.6;
+          const angle = ((mob.chunk * 13 + Math.floor(mob.homeX) + Math.floor(world.time * 2)) % 8) / 8 * Math.PI * 2;
+          mob.spot = {x: mob.homeX + Math.cos(angle) * 22, y: mob.homeY + Math.sin(angle) * 14};
         }
-        if (mob.spot) world.movement.steer(mob, mob.spot, mob.speed * 0.45, dt);
+        if (mob.spot) world.movement.steer(mob, mob.spot, mob.speed * 0.55, dt);
       }
     }
     world.shots.forEach(shot => { shot.age += dt; });

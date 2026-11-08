@@ -53,10 +53,18 @@ function load(src) {
   return {image, ready};
 }
 
+const FOREST_OBJECTS = ['oak', 'birch', 'oak-sapling', 'birch-sapling', 'rocks', 'shrub', 'log', 'waystone'];
+
 export function loadSprites(baseUrl) {
   const heroes = {};
   const mobs = {};
   const jobs = [];
+  const forest = {objects: {}, grass: [], mobs: {}};
+  const take = (url) => {
+    const item = load(url);
+    jobs.push(item.ready);
+    return item.image;
+  };
   for (const [skin, sheets] of Object.entries(HERO_SHEETS)) {
     heroes[skin] = {};
     for (const [action, file] of Object.entries(sheets)) {
@@ -70,5 +78,15 @@ export function loadSprites(baseUrl) {
     mobs[kind] = item.image;
     jobs.push(item.ready);
   }
-  return {heroes, mobs, ready: Promise.all(jobs)};
+  forest.ground = take(new URL('./floresta/chao-0.png', baseUrl).href);
+  forest.terrain = take(new URL('./floresta/terreno.png', baseUrl).href);
+  for (let i = 0; i < 11; i++) {
+    forest.grass.push(take(new URL('./floresta/grama/' + String(i).padStart(2, '0') + '.png', baseUrl).href));
+  }
+  for (const name of FOREST_OBJECTS) {
+    forest.objects[name] = take(new URL('./floresta/' + name + '.png', baseUrl).href);
+  }
+  forest.mobs.cogumelo = take(new URL('./floresta/cogumelo.png', baseUrl).href);
+  forest.mobs.criatura = take(new URL('./floresta/criatura.png', baseUrl).href);
+  return {heroes, mobs, forest, ready: Promise.all(jobs)};
 }

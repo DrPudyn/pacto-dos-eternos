@@ -1,5 +1,5 @@
-.mapa-vivo{position:fixed;inset:0;z-index:2147483000;background:#0c1112;color:#f4eedb;font:14px/1.35 system-ui,sans-serif;overflow:hidden}
-.mapa-vivo .view{display:block;background:#0c1112;image-rendering:pixelated;image-rendering:crisp-edges}
+.mapa-vivo{position:fixed;inset:0;z-index:2147483000;background:#10241c;color:#f4eedb;font:14px/1.35 system-ui,sans-serif;overflow:hidden}
+.mapa-vivo .view{display:block;background:#10241c;image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
 .mapa-hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px;text-shadow:0 2px 2px #000}
 .mapa-top{display:flex;gap:10px;align-items:flex-start}
 .mapa-mini{width:168px;height:108px;background:#111820ef;border:2px solid #b9904b;border-radius:9px;image-rendering:pixelated}

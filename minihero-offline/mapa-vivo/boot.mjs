@@ -58,18 +58,28 @@ export function mountLivingMap(parent, options = {}) {
   let last = performance.now();
   let stopped = false;
 
+  const params = new URLSearchParams(window.location.search);
+  const mockup = params.get('mockup') === '1';
+  if (params.get('limpo') === '1') hud.style.display = 'none';
+
   function resize() {
     const rect = root.getBoundingClientRect();
-    const w = Math.max(320, Math.round(rect.width));
-    const h = Math.max(240, Math.round(rect.height));
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // 2× inteiro: o bitmap fica na resolução nativa e o CSS amplia sem filtrar.
+    const cssW = Math.max(320, Math.floor(rect.width / 2) * 2);
+    const cssH = Math.max(240, Math.floor(rect.height / 2) * 2);
+    canvas.width = cssW / 2;
+    canvas.height = cssH / 2;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    world.camera.setView(w, h);
+    world.camera.setView(canvas.width, canvas.height);
+    if (mockup) {
+      world.camera.x = 0;
+      world.camera.y = 0;
+      world.snapCamera = false;
+      world.paused = true;
+    }
   }
 
   function paintHud() {
@@ -110,13 +120,18 @@ export function mountLivingMap(parent, options = {}) {
   window.addEventListener('resize', onResize);
   resize();
   // ?t=12 adianta a simulação para revisar um instante. Sem o parâmetro, o mapa corre em tempo real.
-  const seek = Number(new URLSearchParams(window.location.search).get('t') || 0);
-  if (seek > 0) {
+  const seek = Number(params.get('t') || 0);
+  if (!mockup && seek > 0) {
     const steps = Math.round(Math.min(90, seek) * 60);
     for (let i = 0; i < steps; i++) stepWorld(world, 1 / 60);
     world.snapCamera = true;
   }
   raf = requestAnimationFrame(frame);
+  window.__mapaMundo = () => world;
+  window.__mapaPronto = sprites.ready.then(() => {
+    renderer.draw(ctx, world, world.camera.view);
+    return true;
+  });
 
   const api = {
     destroy() {

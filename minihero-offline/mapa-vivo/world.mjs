@@ -3,12 +3,12 @@
 
 import {CameraController} from './camera.mjs';
 import {CollisionSystem} from './collision.mjs';
-import {FORMATION, HeroAI, MobAI} from './hero-ai.mjs';
-import {CHUNK_W, TILE} from './constantes.mjs';
+import {HeroAI, MobAI} from './hero-ai.mjs';
+import {CHUNK_PX, CHUNK_W, TILE} from './constantes.mjs';
+import {HEROIS} from './floresta.mjs';
 import {MapManager} from './map-manager.mjs';
 import {MovementSystem} from './movement.mjs';
 import {ProgressionManager} from './progression.mjs';
-import {biomeLabel} from './biomas.mjs';
 
 const DEFAULT_PARTY = [
   {id: 'espada', name: 'Espadachim', skin: 'swordsman'},
@@ -25,9 +25,9 @@ export function normalizeParty(party) {
     id: hero.id ?? 'h' + index,
     name: hero.name || DEFAULT_PARTY.find(item => item.skin === hero.skin)?.name || 'Herói',
     skin: hero.skin,
-    range: hero.skin === 'archer' ? 124 : hero.skin === 'spearman' ? 42 : 34,
-    aggro: hero.skin === 'archer' ? 230 : 168,
-    speed: hero.skin === 'archer' ? 104 : 120,
+    range: hero.skin === 'archer' ? 74 : hero.skin === 'spearman' ? 18 : 14,
+    aggro: hero.skin === 'archer' ? 150 : 110,
+    speed: hero.skin === 'archer' ? 40 : 46,
     damage: hero.skin === 'archer' ? 2 : hero.skin === 'spearman' ? 3 : 3,
     hp: 100,
     maxHp: 100,
@@ -48,11 +48,10 @@ export function createWorld(options = {}) {
   map.ensure(1);
   map.ensure(2);
   const heroes = normalizeParty(options.party);
-  const spine = first.waypoints[Math.floor(first.waypoints.length * 0.42)] ?? first.waypoints[0];
   heroes.forEach((hero, index) => {
-    const slot = FORMATION[index] ?? FORMATION[0];
-    hero.x = spine.x + slot.x;
-    hero.y = spine.y + slot.y;
+    const spot = HEROIS.find(item => item.skin === hero.skin) ?? HEROIS[index] ?? HEROIS[0];
+    hero.x = spot.x;
+    hero.y = spot.y;
   });
   const world = {
     seed,
@@ -62,6 +61,7 @@ export function createWorld(options = {}) {
     drops: [],
     shots: [],
     kills: 0,
+    respawns: 0,
     gold: 0,
     time: 0,
     fade: 0,
@@ -119,10 +119,11 @@ export function stepWorld(world, dt) {
 
 export function describeWorld(world) {
   const focus = focusOf(world);
-  const chunk = world.interior ? world.progression.leadChunk : Math.max(0, Math.floor(focus.x / (CHUNK_W * TILE)));
+  const chunk = world.interior ? world.progression.leadChunk : Math.max(0, Math.floor(focus.x / CHUNK_PX));
+  const forestName = chunk <= 0 ? 'Floresta' : 'Floresta · trecho ' + (chunk + 1);
   return {
     chunk,
-    biome: world.interior ? 'Interior · ' + biomeLabel(world.returnSpot ? Math.floor(world.returnSpot.x / (CHUNK_W * TILE)) : chunk) : biomeLabel(chunk),
+    biome: world.interior ? 'Interior' : forestName,
     interior: !!world.interior,
     kills: world.kills,
     gold: world.gold,
@@ -133,4 +134,4 @@ export function describeWorld(world) {
   };
 }
 
-export {TILE, CHUNK_W};
+export {TILE, CHUNK_W, CHUNK_PX};

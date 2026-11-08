@@ -1,7 +1,7 @@
 // ProgressionManager — gera o próximo trecho, esquece o que ficou para trás
 // e troca o mapa quando o grupo entra numa casa. O ciclo é andar → matar → avançar.
 
-import {CHUNK_H, CHUNK_W, TILE} from './constantes.mjs';
+import {CHUNK_PX, CHUNK_W, FOREST_BOTTOM, FOREST_TOP, TILE} from './constantes.mjs';
 import {MOB_STATS} from './biomas.mjs';
 import {createInterior} from './map-manager.mjs';
 import {FORMATION} from './hero-ai.mjs';
@@ -18,8 +18,8 @@ export class ProgressionManager {
     const xs = world.heroes.map(hero => hero.x);
     const lead = Math.max(...xs);
     const rear = Math.min(...xs);
-    this.leadChunk = Math.max(0, Math.floor(lead / (CHUNK_W * TILE)));
-    const rearChunk = Math.max(0, Math.floor(rear / (CHUNK_W * TILE)));
+    this.leadChunk = Math.max(0, Math.floor(lead / CHUNK_PX));
+    const rearChunk = Math.max(0, Math.floor(rear / CHUNK_PX));
     for (let index = Math.max(0, rearChunk - 1); index <= this.leadChunk + 2; index++) this.map.ensure(index);
     this.map.dropBefore(rearChunk - 1);
     for (const chunk of this.map.chunks.values()) {
@@ -32,7 +32,9 @@ export class ProgressionManager {
 
   mobFrom(chunk, spot, interior) {
     const stats = MOB_STATS[spot.kind] ?? MOB_STATS.slime;
-    const originX = interior ? 0 : chunk.index * CHUNK_W * TILE;
+    const originX = interior ? 0 : chunk.index * CHUNK_PX;
+    const x = Number.isFinite(spot.x) ? spot.x : originX + spot.tx * TILE + TILE / 2;
+    const y = Number.isFinite(spot.y) ? spot.y : spot.ty * TILE + TILE / 2;
     return {
       kind: spot.kind,
       name: stats.name,
@@ -40,10 +42,10 @@ export class ProgressionManager {
       maxHp: stats.hp,
       speed: stats.speed,
       tint: stats.tint,
-      x: originX + spot.tx * TILE + TILE / 2,
-      y: spot.ty * TILE + TILE / 2,
-      homeX: originX + spot.tx * TILE + TILE / 2,
-      homeY: spot.ty * TILE + TILE / 2,
+      x,
+      y,
+      homeX: x,
+      homeY: y,
       tx: spot.tx,
       ty: spot.ty,
       chunk: interior ? -1 : chunk.index,
@@ -107,8 +109,8 @@ export class ProgressionManager {
       min = Math.min(min, key);
       max = Math.max(max, key);
     }
-    if (!Number.isFinite(min)) return {x: 0, y: 0, w: CHUNK_W * TILE, h: CHUNK_H * TILE};
-    return {x: min * CHUNK_W * TILE, y: 0, w: (max - min + 1) * CHUNK_W * TILE, h: CHUNK_H * TILE};
+    if (!Number.isFinite(min)) return {x: 0, y: FOREST_TOP, w: CHUNK_PX, h: FOREST_BOTTOM - FOREST_TOP};
+    return {x: min * CHUNK_PX - 24, y: FOREST_TOP, w: (max - min + 1) * CHUNK_PX + 48, h: FOREST_BOTTOM - FOREST_TOP};
   }
 
   transitions(world) {

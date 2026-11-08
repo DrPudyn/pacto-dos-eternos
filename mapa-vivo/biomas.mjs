@@ -94,7 +94,8 @@ export function biomeLabel(index) {
 export const MOB_STATS = {
   slime: {name: 'Slime', hp: 6, speed: 42, tint: '#53a56a'},
   lobo: {name: 'Lobo', hp: 8, speed: 56, tint: '#8a9098'},
-  cogumelo: {name: 'Cogumelo', hp: 7, speed: 36, tint: '#d0b68e'},
+  cogumelo: {name: 'Cogumelo', hp: 8, speed: 16, tint: '#d24b4b'},
+  criatura: {name: 'Criatura', hp: 7, speed: 22, tint: '#3e7a32'},
   goblin: {name: 'Goblin', hp: 7, speed: 50, tint: '#6ea84a'},
   orc: {name: 'Orc', hp: 12, speed: 44, tint: '#3e7a32'},
   morcego: {name: 'Morcego', hp: 4, speed: 70, tint: '#6a5a86'},
