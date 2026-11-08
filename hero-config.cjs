@@ -14,4 +14,35 @@ function addMage(source){
  source=source.slice(0,start)+arrows+source.slice(end);
  return require('./boss-visuals.cjs').addBossState(source);
 }
-module.exports={addMage};
+// The swordsman body is 9px in the 32px frame. 9/8 is 12.5% above the original
+// scale of 1, and it is applied once per view. Battle actors already use 2, so
+// the swordsman uses 2*9/8 there and nowhere else on top of that.
+function scaleSwordsman(source){
+ const replace=(from,to)=>{if(!source.includes(from))throw Error('Swordsman scale patch missing: '+from.slice(0,80));source=source.replace(from,to);};
+ replace(
+  'function lb(e,t,rarity){let n=tn(e)?e:`swordsman`,{x:r,y:i}=By[n];return ub(mhHeroRarityUrl(n,`idle`,rarity),{sheetWidth:cb.width,sheetHeight:cb.height,x:r,y:i,width:16,height:16,scale:t})}',
+  'function lb(e,t,rarity){let n=tn(e)?e:`swordsman`,{x:r,y:i}=By[n],k=n===`swordsman`?9/8:1;return ub(mhHeroRarityUrl(n,`idle`,rarity),{sheetWidth:cb.width,sheetHeight:cb.height,x:r,y:i,width:16,height:16,scale:t*k})}'
+ );
+ replace(
+  'function mb(e,t,n){let r=db*t,i=fb*t,a=ub(mhHeroRarityUrl(tn(e.skin)?e.skin:`swordsman`,`idle`,e.rarity),{sheetWidth:512,sheetHeight:128,x:0,y:0,width:32,height:32,scale:n});return a.classList.add(`card-hero`)',
+  'function mb(e,t,n){let r=db*t,i=fb*t,skin=tn(e.skin)?e.skin:`swordsman`,k=skin===`swordsman`?9/8:1,a=ub(mhHeroRarityUrl(skin,`idle`,e.rarity),{sheetWidth:512,sheetHeight:128,x:0,y:0,width:32,height:32,scale:n});if(k!==1)a.style.backgroundSize=`${512*n*k}px ${128*n*k}px`,a.style.backgroundPosition=`${16*n*(1-k)}px ${18.5*n*(1-k)}px`,a.style.zIndex=`1`;return a.classList.add(`card-hero`)'
+ );
+ replace(
+  'e.rarity>=4?J(`span`,{class:`card-holo`}):null)',
+  'e.rarity>=4?J(`span`,{class:`card-holo`,style:{zIndex:`2`}}):null)'
+ );
+ replace(
+  'function nw(e,t,n,r,i=0){let a=ub(e,{sheetWidth:t.frames*32,sheetHeight:t.rows*32,x:0,y:n*32,width:32,height:32,scale:r});return a.classList.add(`sprite-idle`),a.style.setProperty(`--frames`,String(t.frames)),a.style.setProperty(`--strip`,`${t.frames*32*r}px`),a.style.setProperty(`--px`,`${r}px`),a.style.setProperty(`--i`,String(i)),a}',
+  'function nw(e,t,n,r,i=0){let k=String(e).includes(`swordsman`)?9/8:1,s=r*k,a=ub(e,{sheetWidth:t.frames*32,sheetHeight:t.rows*32,x:0,y:n*32,width:32,height:32,scale:s});a.classList.add(`sprite-idle`),a.style.setProperty(`--frames`,String(t.frames)),a.style.setProperty(`--strip`,`${t.frames*32*s}px`),a.style.setProperty(`--px`,`${s}px`),a.style.setProperty(`--i`,String(i));if(k===1)return a;let o=J(`span`,{class:`sprite-window`,style:{width:`${32*r}px`,height:`${32*r}px`,overflow:`hidden`,position:`relative`,flex:`none`}});return a.style.position=`absolute`,a.style.left=`${16*r*(1-k)}px`,a.style.top=`${18.5*r*(1-k)}px`,o.append(a),o}'
+ );
+ replace(
+  'ub(W(`heroes/swordsman-idle.png`),{sheetWidth:512,sheetHeight:128,x:9,y:7,width:14,height:14,scale:4})',
+  'ub(W(`heroes/swordsman-idle.png`),{sheetWidth:512,sheetHeight:128,x:9,y:7,width:14,height:14,scale:4*9/8})'
+ );
+ replace(
+  'i.sprite.texture=mhRarityCrop(this,`heroes/${l}-${r}`,e.rarity,s*32,n*32,32,32)}let u=this.selectedHero===e.id;',
+  'i.sprite.texture=mhRarityCrop(this,`heroes/${l}-${r}`,e.rarity,s*32,n*32,32,32)}let sy=l===`swordsman`?2*9/8:2;i.sprite.scale.set(sy),i.sprite.y=5-2.5*sy;let u=this.selectedHero===e.id;'
+ );
+ return source;
+}
+module.exports={addMage,scaleSwordsman};

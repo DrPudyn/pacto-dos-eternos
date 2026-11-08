@@ -1,0 +1,16 @@
+/* Espadachim na abertura: o quadro continua 32px e o desenho cresce 9/8
+   (12,5% sobre o original) em torno do centro do pé (pixel 18.5).
+   width/height com image-rendering:pixelated, sem transform (que borra). */
+.loading-hero[data-loading-hero="swordsman"] img{
+  width:calc(3072px * 9 / 8);
+  height:calc(768px * 9 / 8);
+  margin-left:calc(96px - 96px * 9 / 8);
+  margin-top:calc(93px - 111px * 9 / 8);
+  image-rendering:pixelated;
+}
+/* O recorte do avatar é 14px. Em 4×9/8 ele mede 63px e cabe no quadro de 64.
+   A altura da barra continua a original. */
+.player-avatar{width:64px;height:64px}
+.art-row>.sprite-window{margin:0 -68px}
+.art-dungeon .art-row>.sprite-window{margin:0 -66px}
+.art-row .sprite-window>.sprite{margin:0}

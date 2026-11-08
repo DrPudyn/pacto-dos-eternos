@@ -15,7 +15,7 @@ function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign}
  const shortcut=index=>originals[index]?.click();
  function choice(title,entries){const forge=title==='FORJAS',notes={'INVOCAR HERÓIS':'Desperte um novo aliado do Pacto.','INVOCAR ARMAS':'Encontre a arma da sua próxima conquista.','FORJAS':'Prepare seus heróis para a próxima batalha.','LÚMINA':'A guardiã que organiza suas forjas.','FUSÃO':'Una seus heróis e desperte um novo poder.','APRIMORAR EQUIPAMENTO':'Alimente suas armas com Brasas do Pacto.','DESMONTAR ARMAS':'Recupere Brasas dos seus equipamentos.'};dx({title,className:'eternal-menu '+(forge?'eternal-menu-forge':'eternal-menu-summon')},body=>{body.classList.add('refuge-choices');body.append(J('p',{class:'eternal-menu-intro',text:forge?'O fogo do Pacto fortalece seus eternos.':'Toda lenda começa com um chamado.'}));for(const [label,img,fn]of entries){const b=Y('alt',()=>{cx();fn();},label),icon=J('span',{class:'refuge-choice-icon',attrs:{'aria-hidden':'true'}});if(img==='ajudante-personagem.png')icon.append(J('span',{class:'mh-assistant-sprite refuge-choice-assistant'}));else if(img==='forge-ui-upgrade'||img==='forge-ui-fusion')icon.append(J('span',{class:'forge-ui-art '+(img==='forge-ui-upgrade'?'forge-ui-anvil':'forge-ui-fusion')}));else if(img)icon.append(J('img',{attrs:{src:new URL('./'+img,import.meta.url).href,alt:''}}));else icon.textContent='✦';b.replaceChildren(icon,J('span',{class:'refuge-choice-copy'},J('span',{class:'refuge-choice-label',text:label}),J('small',{class:'refuge-choice-description',text:notes[label]??''})),J('span',{class:'refuge-choice-arrow',text:'›',attrs:{'aria-hidden':'true'}}));body.append(b);}});}
  const destinations=[
- ['HERÓIS',22,44,()=>go('heroes'),'heroes'],['MASMORRA',26,20,()=>openCampaign?openCampaign():go('dungeon'),'dungeon'],
+ ['HERÓIS',8,32,()=>go('heroes'),'heroes'],['MASMORRA',26,20,()=>openCampaign?openCampaign():go('dungeon'),'dungeon'],
  ['INVOCAÇÕES',50,49,()=>choice('INVOCAÇÕES',[
  ['INVOCAR HERÓIS','pact-book.png',()=>shortcut(2)],['INVOCAR ARMAS','weapon-chest.png',openWeapons]]),'summon'],
  ['BAZAR',73,46,()=>go('market'),'market'],
@@ -23,7 +23,10 @@ function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign}
  ['FORJAS','forge-6-lv3.png',()=>shortcut(4)],['LÚMINA','ajudante-personagem.png',()=>shortcut(5)],['FUSÃO','forge-ui-fusion',()=>go('fusion')],['APRIMORAR EQUIPAMENTO','forge-ui-upgrade',()=>{ex();openUpgrade();}],['DESMONTAR ARMAS','brasa-do-pacto.png',()=>{ex();openDismantle();}]]),'forge'],
  ['RANKING',28,71,()=>go('leaderboard'),'ranking'],['TORRE DO INFINITO',88,18,()=>go('tower'),'tower']
  ];
- for(const [label,x,y,fn,kind]of destinations){const b=J('button',{class:'refuge-destination refuge-'+kind,attrs:{type:'button'},style:{left:x+'%',top:y+'%'}},J('span',{text:label}));b.onclick=fn;nav.append(b);}
+ for(const [label,x,y,fn,kind]of destinations){
+  const b=J('button',{class:'refuge-destination refuge-'+kind,attrs:{type:'button'},style:{left:x+'%',top:y+'%'}},J('span',{text:label}));
+  b.onclick=fn;nav.append(b);
+ }
  const mobileNav=J('nav',{class:'refuge-mobile-nav',attrs:{'aria-label':'Destinos para celular'}});
  for(const [label,x,y,fn,kind]of destinations){const button=J('button',{class:'refuge-mobile-link refuge-mobile-'+kind,attrs:{type:'button'},text:label});button.onclick=fn;mobileNav.append(button);}world.append(mobileNav);
  const themes={HEROES:'heroes',HERÓIS:'heroes',BLACKSMITHS:'forge',FORJAS:'forge',AJUDANTE:'forge',LÚMINA:'forge',PORTER:'forge',MARKET:'market',MERCADO:'market',SHOP:'market',LOJA:'market','RANKING FESTIVAL':'ranking',SUMMON:'summon',ARMAMENTOS:'summon',FUSION:'summon'};
@@ -73,7 +76,7 @@ function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign}
   // Individual lantern pools flicker out of phase.
   for(const [x,y]of [[165,172],[334,139],[510,182],[630,192],[681,304],[182,318]])glow(x,y,16,'#ffc55c',.10+.07*Math.sin(t*4+x));
   // Cloth strips ripple gently, anchored to poles at the building edges.
-  if(art.complete&&art.naturalWidth){const scale=art.naturalWidth/836;for(const [x,y,w,h]of [[58,126,14,45],[553,125,18,42],[167,257,17,42],[493,306,17,47]])for(let row=0;row<h;row++){const sway=reduced.matches?0:Math.sin(t*1.8+row*.16)*(row/h)*1.5;ctx.drawImage(art,x*scale,(y+row)*scale,w*scale,scale,Math.round(x+sway),y+row,w,1);}}
+  if(art.complete&&art.naturalWidth){const scale=art.naturalWidth/836;for(const [x,y,w,h]of [[58,126,14,45],[553,125,18,42],[493,306,17,47]])for(let row=0;row<h;row++){const sway=reduced.matches?0:Math.sin(t*1.8+row*.16)*(row/h)*1.5;ctx.drawImage(art,x*scale,(y+row)*scale,w*scale,scale,Math.round(x+sway),y+row,w,1);}}
  }
  frame=requestAnimationFrame(render);
  // One installation per login; the page reload on logout releases observers and RAF.

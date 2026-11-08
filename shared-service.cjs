@@ -7,10 +7,18 @@ const weaponCodex=require('./weapon-codex.cjs');
 const equipment=require('./equipment-rules.cjs');
 const marketRules=require('./market-rules.cjs');
 const MILLION=1e6;
+const bs58=require('./bs58.cjs');
+const {createAuth,isWalletAddress}=require('./solana-auth.cjs');
+function isPlayerNick(name){return typeof name==='string'&&/^[\p{L}\p{N} _-]{2,20}$/u.test(name)&&!isWalletAddress(name);}
+function accountNeedsNick(user){return !isPlayerNick(user?.name)||(!!user?.walletAddress&&user.name===user.walletAddress);}
+const {createLojaService}=require('./loja-service.cjs');
 function service(options={}){
  const dir=options.dir??path.join(__dirname,'dados-compartilhados');fs.mkdirSync(dir,{recursive:true});
  const file=path.join(dir,'jogadores.json');
  const store=require('./shared-store.cjs').sharedStore(dir),clock=options.now??Date.now;let db=store.load(),festival,handling=false;
+ const walletAuth=createAuth({now:clock});
+ const loja=createLojaService({now:clock,config:options.lojaConfig,fetch:options.fetch,getTransaction:options.getTransaction});
+ function migrateDb(){db.authVersion??=1;return db.authVersion<2;}
  db.inviteCode??=crypto.randomBytes(6).toString('hex');
  const runtime=new Map(),attempts=new Map(),presence=new Map(),ticketAttempts=new Map(),chatRetentionMs=30*60*1000,notices=[],noticeSeen=new Map(),noticeTtlMs=10*60*1000;
  db.tickets??=[];
@@ -94,6 +102,24 @@ function service(options={}){
  function failLogin(name){const key='login-fail:'+name.toLocaleLowerCase(),now=Date.now(),old=attempts.get(key),rate=old&&old.until>now?old:{count:0,until:now+15*60*1000};rate.count++;attempts.set(key,rate);}
  function clearLoginFailures(name){attempts.delete('login-fail:'+name.toLocaleLowerCase());}
  function scryptKey(password,salt){return new Promise((resolve,reject)=>crypto.scrypt(password,salt,64,(err,key)=>err?reject(err):resolve(key)));}
+ function signatureBytes(signature){
+  if(Array.isArray(signature))return Buffer.from(signature);
+  if(signature&&typeof signature==='object'&&typeof signature.type==='string'&&Array.isArray(signature.data))return Buffer.from(signature.data);
+  if(typeof signature==='string'){
+   if(/^[0-9a-fA-F]+$/.test(signature)&&signature.length===128)return Buffer.from(signature,'hex');
+   return bs58.decode(signature);
+  }
+  throw Error('Assinatura inválida.');
+ }
+ function walletCredential(data){
+  const address=typeof data.address==='string'?data.address.trim():'',message=typeof data.message==='string'?data.message:'';
+  if(!walletAuth.isWalletAddress(address)||!message)throw Error('Carteira ou mensagem inválida.');
+  const signature=signatureBytes(data.signature);
+  if(!walletAuth.verifySignature(address,message,signature))throw Error('Assinatura inválida ou expirada.');
+  if(!walletAuth.consumeChallenge(address,message))throw Error('O desafio expirou. Conecte a carteira novamente.');
+  return address;
+ }
+ function userByWallet(address){return db.users.find(u=>u.walletAddress===address&&!u.isBot);}
  const importCoinLimit=5_000_000_000;
  function acceptedImport(state){
   if(!state||typeof state!=='object'||Array.isArray(state))throw Error('Salvamento inválido.');
@@ -124,7 +150,7 @@ function service(options={}){
  }
  function isAdmin(user){return !!user?.canImport&&user.name?.toLocaleLowerCase()==='admin';}
  function ticketAdmin(user){return isAdmin(user);}
- function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true},equipment:equipment.view(e.player),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
+ function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,needsNick:accountNeedsNick(user),walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true,loja:true},equipment:equipment.view(e.player),loja:loja.publicView(user),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
  function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now()&&s.userId!==user.id);db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
  async function handleRequest(req,res,url){
   if(!url.pathname.startsWith('/shared-api/'))return false;
@@ -148,6 +174,58 @@ function service(options={}){
     notices.push(notice);while(notices.length>8)notices.shift();pruneNotices(at);
     result(res,200,{ok:true,id:notice.id,text:notice.text,expiresAt:notice.expiresAt,expiresInMinutes:10});return true;
    }
+   if(route==='auth/challenge'){
+    if(req.method!=='POST'){result(res,405,{});return true;}
+    const addr=clientAddress(req);
+    if(tooMany('ip:'+addr+':auth-challenge',30,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    const address=typeof data.address==='string'?data.address.trim():'';
+    if(!walletAuth.isWalletAddress(address)){result(res,400,{error:'Endereço de carteira inválido.'});return true;}
+    walletAuth.purge();
+    result(res,200,walletAuth.issueChallenge(address));return true;
+   }
+   if(route==='auth/login'){
+    if(req.method!=='POST'){result(res,405,{});return true;}
+    const addr=clientAddress(req);
+    if(tooMany('ip:'+addr+':auth-login',20,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    let address;
+    try{address=walletCredential(data);}catch(e){result(res,401,{error:e.message});return true;}
+    const user=userByWallet(address);
+    if(!user){result(res,404,{error:'Carteira sem perfil. Escolha um nome para criar a conta ou vincule um perfil antigo.',code:'wallet_unlinked',address});return true;}
+    const headers=issue(user,req);result(res,200,payload(user),headers);return true;
+   }
+   if(route==='auth/register'){
+    if(req.method!=='POST'){result(res,405,{});return true;}
+    const addr=clientAddress(req),name=typeof data.name==='string'?data.name.trim():'';
+    if(tooMany('ip:'+addr+':auth-register',12,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    if(!/^[\p{L}\p{N} _-]{2,20}$/u.test(name)){result(res,400,{error:'Use um nome de 2 a 20 caracteres.'});return true;}
+    if(db.users.some(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase())){result(res,409,{error:'Esse nome já está em uso.'});return true;}
+    let address;
+    try{address=walletCredential(data);}catch(e){result(res,401,{error:e.message});return true;}
+    if(userByWallet(address)){result(res,409,{error:'Esta carteira já tem um perfil.'});return true;}
+    if(db.users.some(u=>u.walletAddress===address)){result(res,409,{error:'Esta carteira já tem um perfil.'});return true;}
+    const user={id:crypto.randomUUID(),name,walletAddress:address,canImport:!db.users.some(u=>u.canImport)&&hostMachine(req),imported:true,state:null,tutorial:require('./tutorial-rules.cjs').create()};
+    db.users.push(user);
+    const starting=actor(user);starting.player.mintCards=0;starting.player.weaponSummons=0;
+    const headers=issue(user,req);result(res,200,payload(user),headers);return true;
+   }
+   if(route==='auth/link'){
+    if(req.method!=='POST'){result(res,405,{});return true;}
+    const addr=clientAddress(req),name=typeof data.name==='string'?data.name.trim():'',password=data.password;
+    if(tooMany('ip:'+addr+':auth-link',8,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    if(!/^[\p{L}\p{N} _-]{2,20}$/u.test(name)||typeof password!=='string'||password.length<8||password.length>128){result(res,400,{error:'Informe o nome e a senha antigos do perfil.'});return true;}
+    let address;
+    try{address=walletCredential(data);}catch(e){result(res,401,{error:e.message});return true;}
+    if(userByWallet(address)||db.users.some(u=>u.walletAddress===address)){result(res,409,{error:'Esta carteira já está vinculada.'});return true;}
+    const target=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase());
+    if(!target||target.isBot){result(res,404,{error:'Perfil não encontrado.'});return true;}
+    if(target.walletAddress){result(res,409,{error:'Este perfil já foi vinculado a uma carteira.'});return true;}
+    if(tooMany('scrypt',45,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
+    const key=await scryptKey(password,target.salt??'dummy'),stored=typeof target.pass==='string'&&/^[a-f0-9]{128}$/.test(target.pass)?Buffer.from(target.pass,'hex'):null;
+    if(!stored||stored.length!==key.length||!crypto.timingSafeEqual(key,stored)){result(res,401,{error:'Nome ou senha incorretos.'});return true;}
+    target.walletAddress=address;delete target.salt;delete target.pass;delete target.passwordReset;
+    db.sessions=db.sessions.filter(s=>s.userId!==target.id);
+    const headers=issue(target,req);result(res,200,payload(target),headers);return true;
+   }
    if(route==='register'||route==='login'){
     if(req.method!=='POST'){result(res,405,{});return true;}
     const addr=clientAddress(req),name=typeof data.name==='string'?data.name.trim():'',password=data.password;
@@ -155,6 +233,7 @@ function service(options={}){
     if(tooMany('ip:'+addr+':'+route,12,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
     if(!/^[\p{L}\p{N} _-]{2,20}$/u.test(name)||typeof password!=='string'||password.length<8||password.length>128){result(res,400,{error:'Use um nome de 2 a 20 caracteres e senha de 8 a 128 caracteres.'});return true;}
     let user=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase());
+    if(route==='login'&&user?.walletAddress){result(res,403,{error:'Este perfil usa carteira Solana. Conecte a carteira para entrar.'});return true;}
     if(route==='login'&&user?.isBot){result(res,401,{error:'Este perfil é um jogador automático.'});return true;}
     if(tooMany('scrypt',45,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
     if(route==='register'){
@@ -177,7 +256,9 @@ function service(options={}){
     const name=typeof data.name==='string'?data.name.trim():'',code=typeof data.code==='string'?data.code.trim().toUpperCase():'',password=data.password;
     if(!/^[\p{L}\p{N} _-]{2,20}$/u.test(name)||!/^[A-F0-9]{16}$/.test(code)||typeof password!=='string'||password.length<8||password.length>128){result(res,400,{error:'Confira o nome, o código e use uma nova senha de 8 a 128 caracteres.'});return true;}
     if(tooMany('reset-name:'+name.toLocaleLowerCase(),5,15*60*1000)){result(res,429,{error:'Aguarde alguns minutos antes de tentar outro código.'});return true;}
-    const target=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase()),digest=crypto.createHash('sha256').update(code).digest();
+    const target=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase());
+    if(target?.walletAddress){result(res,400,{error:'Este perfil usa carteira Solana. Entre com a carteira ou peça ao dono para emitir um desafio.'});return true;}
+    const digest=crypto.createHash('sha256').update(code).digest();
     const saved=target&&!target.isBot?target.passwordReset:null;
     if(!saved||!Number.isFinite(saved.expiresAt)||saved.expiresAt<=clock()||typeof saved.hash!=='string'||!/^[a-f0-9]{64}$/.test(saved.hash)||!crypto.timingSafeEqual(digest,Buffer.from(saved.hash,'hex'))){result(res,400,{error:'Código inválido ou expirado. Peça um novo código ao dono do jogo.'});return true;}
     if(tooMany('scrypt',45,60000)){result(res,429,{error:'Aguarde um minuto antes de tentar novamente.'});return true;}
@@ -187,6 +268,20 @@ function service(options={}){
    }
    const user=authenticate(req);if(!user){result(res,401,{error:'Entre no seu perfil para continuar.'});return true;}
    if(tooMany('api:'+user.id,80,10000)){result(res,429,{error:'Muitas ações em seguida. Espere alguns segundos.'});return true;}
+   if(route==='loja/rpc'){
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    if(tooMany('loja-rpc:'+user.id,20,10000)){result(res,429,{error:'Muitas consultas à rede Solana. Espere alguns segundos.'});return true;}
+    const out=await loja.proxyRpc(data);
+    result(res,out.status,out.body);return true;
+   }
+   if(route==='profile/nick'){
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    const name=typeof data.name==='string'?data.name.trim():'';
+    if(!isPlayerNick(name)){result(res,400,{error:'Use um nick de 2 a 20 letras, números, espaços, _ ou -.'});return true;}
+    if(user.name.toLocaleLowerCase()==='admin'){result(res,403,{error:'O perfil do dono mantém o nome admin.'});return true;}
+    if(name.toLocaleLowerCase()==='admin'||db.users.some(u=>u!==user&&u.name.toLocaleLowerCase()===name.toLocaleLowerCase())){result(res,409,{error:'Esse nome já está em uso.'});return true;}
+    user.name=name;persist();result(res,200,payload(user));return true;
+   }
    if(route==='notice/dismiss'){
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
     const id=typeof data.id==='string'?data.id:'';
@@ -306,6 +401,7 @@ function service(options={}){
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
     const name=typeof data.name==='string'?data.name.trim():'',target=db.users.find(u=>u.name.toLocaleLowerCase()===name.toLocaleLowerCase());
     if(!target||target.isBot){result(res,404,{error:'Perfil não encontrado.'});return true;}
+    if(target.walletAddress){result(res,400,{error:'Perfis com carteira não usam recuperação por senha.'});return true;}
     const code=crypto.randomBytes(8).toString('hex').toUpperCase();target.passwordReset={hash:crypto.createHash('sha256').update(code).digest('hex'),expiresAt:clock()+15*60*1000};persist();result(res,200,{name:target.name,code,expiresInMinutes:15});return true;
    }
    if(route.startsWith('tower/')){
@@ -316,6 +412,21 @@ function service(options={}){
     else if(route==='tower/pause'&&req.method==='POST')value=tower.pause(user);
     else {result(res,405,{error:'Ação inválida.'});return true;}
     persist();result(res,200,value);return true;
+   }
+   if(route==='loja/config'&&req.method==='GET'){result(res,200,loja.publicView(user));return true;}
+   if(route==='loja/pedido'&&req.method==='POST'){
+    const product=typeof data.product==='string'?data.product:'';
+    const paymentMint=typeof data.paymentMint==='string'?data.paymentMint.trim():'';
+    const quantity=Number.isInteger(data.quantity)?data.quantity:1;
+    const created=loja.createOrder(db,user,{product,quantity,paymentMint});
+    persist();result(res,200,{...payload(user),lojaOrder:created});return true;
+   }
+   if(route==='loja/confirmar'&&req.method==='POST'){
+    const orderId=typeof data.orderId==='string'?data.orderId:'';
+    const signature=typeof data.signature==='string'?data.signature.trim():'';
+    const outcome=await loja.confirmOrder(db,user,actor(user),{orderId,signature});
+    festival.updatePower(user,clock());
+    persist();result(res,200,{...payload(user),lojaResult:outcome});return true;
    }
    if(route==='session'||route==='state'){const p=payload(user);persist();result(res,200,p);return true;}
    if(route==='leaderboard'){
@@ -410,7 +521,8 @@ function service(options={}){
  function advanceTowers(at=clock()){if(handling)return false;advanceFestival(at);return db.users.length>0;}
  let queue=Promise.resolve();
  function handle(req,res,url){if(!url.pathname.startsWith('/shared-api/'))return Promise.resolve(false);const task=queue.then(async()=>{handling=true;try{return await handleRequest(req,res,url);}finally{handling=false;}});queue=task.catch(()=>{});return task;}
- ensureBots();persist();
+ ensureBots();
+ if(migrateDb()){db.authVersion=2;persist();}else persist();
  return {handle,persist,advanceTowers,close:()=>store.close()};
 }
 module.exports={service};
