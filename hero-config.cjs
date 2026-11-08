@@ -6,6 +6,7 @@ function addMage(source){
  replace('function W(e){','function W(e){if(/^heroes\\/mage-(idle|walk|attack)\\.png$/.test(e))return new URL(`./mage-${e.split(`-`).pop()}`,import.meta.url).href;');
  replace('var Ry={swordsman:', 'var Ry={mage:`diagonal`,swordsman:');
  replace('By={swordsman:', 'By={mage:{x:8,y:4},swordsman:');
+ replace('archer:{x:8,y:6}','archer:{x:8,y:4}');
  replace('Uy={swordsman:', 'Uy={mage:`effects/burst-electric`,swordsman:');
  const start=source.indexOf('renderArrows(e,t){'),end=source.indexOf('renderMonster(e,t,n){',start);
  let arrows=source.slice(start,end);
