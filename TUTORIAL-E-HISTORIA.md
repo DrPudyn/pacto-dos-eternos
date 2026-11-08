@@ -9,16 +9,15 @@ O jogador pode visitar áreas reais pelo botão **Ver esta área**, sem o tutori
 
 **Continuar depois** salva a etapa. Em **Configurações → Tutorial e História** é possível continuar um guia pendente; após concluído, o botão passa a **Rever tutorial** e abre desde o começo. A revisão também permite navegar pelos capítulos já conhecidos.
 
-## Recompensa e economia
-- Nas contas novas, os 15 Selos de Pacto e 15 baús de armas iniciais são entregues ao concluir o tutorial, em vez de imediatamente no cadastro.
-- A conclusão e o progresso são validados e salvos no servidor. Não é possível pular diretamente para a recompensa pela interface ou pelo parâmetro de etapa.
-- Clique duplo, solicitações concorrentes, reinício e revisão não repetem a entrega.
-- O presente não exige ouro e pode ser aberto no Baú: selos invocam heróis, e os baús geram armas da classe escolhida.
-- Contas antigas preservam seus recursos, heróis e progresso. O bônus inicial já entregue é reconhecido e não é entregue novamente.
+## Conclusão e economia
+- Contas novas começam sem Selos de Pacto nem baús de armas gratuitos. Heróis e equipamentos vêm de bosses, campanha, ouro na loja e progresso normal.
+- A conclusão e o progresso são validados e salvos no servidor. Não é possível pular etapas pelo parâmetro inválido de etapa.
+- Clique duplo, solicitações concorrentes e revisão não concedem brindes extras.
+- Contas antigas preservam seus recursos, heróis e progresso (`legacyStarter` impede novos presentes em contas que já tinham bônus no cadastro).
 
 ## Implementação e verificação
 Conteúdo: `tutorial-content.cjs`. Regras: `tutorial-rules.cjs`. Interface: `tutorial-client.js` e `tutorial.css`. Rotas autenticadas `/shared-api/tutorial/{state,advance,resume,defer,complete}`. Estado persistido em `user.tutorial`.
 
-Verificações: `testar-tutorial.cjs`, `testar-baus-recompensas.cjs`, `testar-codex-criaturas.cjs` e `testar-atb-api.cjs`. Confirmados primeiro acesso automático, visitas às áreas, retomada pelas Configurações, conclusão com presentes 15+15 no Baú e revisão sem duplicação.
+Verificações: `testar-tutorial.cjs`, `testar-baus-recompensas.cjs`, `testar-codex-criaturas.cjs` e `testar-atb-api.cjs`. Confirmados primeiro acesso automático, visitas às áreas, retomada pelas Configurações, conclusão sem brindes e revisão sem erro.
 
 A conferência visual usou um banco vazio e um perfil fictício em `localhost:17850`, separado da conta real em `127.0.0.1:17841`. Nenhuma sessão, senha ou save de produção foi copiado para esse teste.
