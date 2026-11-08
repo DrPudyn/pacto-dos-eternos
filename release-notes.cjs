@@ -1,4 +1,8 @@
 module.exports=[
+ {at:'2026-11-08T12:00:00-03:00',title:'Mapa vivo com câmera',items:[
+  'O mapa vivo acompanha o grupo: os heróis andam sozinhos para a direita, enfrentam os monstros da área e seguem caminho. A câmera vai junto e o cenário rola no sentido contrário.',
+  'Floresta, cidade, ponte, masmorra e cripta se revezam. As casas da cidade têm interior. O ouro mostrado nessa tela fica só na trilha e não altera o baú, a loja nem o progresso salvo.'
+ ]},
  {at:'2026-10-25T19:30:00-03:00',title:'Link fixo para jogar online',items:[
   'O Pacto dos Eternos agora tem um endereço fixo: https://elongated-handwrite-expose.ngrok-free.dev. Salve nos favoritos, ele não muda mais quando o servidor reinicia.',
   'Na primeira visita aparece uma tela de aviso do ngrok; é só clicar em "Visit Site". Contas, progresso e os bots continuam os mesmos.'

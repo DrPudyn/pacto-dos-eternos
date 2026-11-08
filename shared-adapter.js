@@ -4,6 +4,7 @@ async function startShared(){
  document.getElementById('loading')?.remove();
  const root=document.getElementById('app');
  let current=null,game=null,balance=0,notifyWallet=()=>{},busy=false,lastStatus=null,hostInfo=null,codexUI=null,onlineCount=null,festivalUI=null,gearUI=null,tutorialUI=null;
+ globalThis['mhDescribeParty']=()=>(current?.packet?.player?.heroes??[]).filter(h=>h&&typeof h.skin==='string').slice(0,4).map(h=>({id:h.id,skin:h.skin,name:nn(h.skin).name}));
  let presenceAt=0,onlineNames=[],chatReconnect=()=>{};
  function updatePresence(value){if(Number.isInteger(value.onlineCount)&&(value.presenceAt??0)>=presenceAt){presenceAt=value.presenceAt??0;onlineCount=value.onlineCount;onlineNames=value.online??[];paintPresence();}}
  let lastNotices=[];

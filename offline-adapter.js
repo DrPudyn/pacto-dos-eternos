@@ -84,6 +84,8 @@ function startOffline() {
  window.addEventListener('beforeunload',()=>{advance();save();});
  // Exposed only for local diagnostics and save backup, never a remote service.
  window.miniheroOffline={exportSave:()=>{advance();save();return JSON.parse(localStorage.getItem(KEY));}};
+ // Leitura para o mapa vivo. Não grava save, ouro, energia nem status dos heróis.
+ globalThis['mhDescribeParty']=()=>player.heroes.filter(h=>h&&typeof h.skin==='string').slice(0,4).map(h=>({id:h.id,skin:h.skin,name:nn(h.skin).name}));
  const badge=document.createElement('div');badge.textContent='OFFLINE • SALVO NESTE PC';badge.style.cssText='position:fixed;bottom:4px;left:8px;z-index:8;font:10px monospace;color:#a9a9b8;pointer-events:none';document.body.append(badge);
 }
 startOffline();

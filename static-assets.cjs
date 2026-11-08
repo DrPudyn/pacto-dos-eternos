@@ -1,7 +1,15 @@
 const fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
 const {promisify}=require('node:util');
 const brotli=promisify(zlib.brotliCompress),gzip=promisify(zlib.gzip);
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.mp3':'audio/mpeg','.webmanifest':'application/manifest+json'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.mp3':'audio/mpeg','.webmanifest':'application/manifest+json'};
+const FIXED_ASSETS=new Set(['/compartilhado.html','/shared.css','/icon-192.png','/icon-512.png','/manifest.webmanifest','/mapa-vivo.html']);
+const SHARED_BUILD=/^\/shared-build\/[A-Za-z0-9_.-]+$/;
+const MAPA_VIVO=/^\/mapa-vivo(?:\/[A-Za-z0-9_-]+)+\.(?:mjs|js|css|png|json|webp)$/;
+function allowedAsset(name){
+ if(typeof name!=='string'||name.length>200||!name.startsWith('/'))return false;
+ if(name.includes('..')||name.includes('\\')||name.includes('\0')||name.includes('%'))return false;
+ return FIXED_ASSETS.has(name)||SHARED_BUILD.test(name)||MAPA_VIVO.test(name);
+}
 function acceptsEncoding(header,name){return (header??'').split(',').some(part=>{const [token,...params]=part.trim().toLowerCase().split(';');const quality=params.find(p=>p.trim().startsWith('q='));return token.trim()===name&&(!quality||Number(quality.trim().slice(2))>0);});}
 function staticAssets(root,{maxBytes=64*1024*1024}={}){
  const cache=new Map(),pending=new Map();let used=0;
@@ -16,7 +24,7 @@ function staticAssets(root,{maxBytes=64*1024*1024}={}){
  const rootResolved=path.resolve(root);
  function miss(res,status){res.writeHead(status,{'X-Content-Type-Options':'nosniff','Cache-Control':'no-store','Referrer-Policy':'same-origin'});res.end();}
  return async function serve(req,res,name){
-  if(!(/^\/shared-build\/[A-Za-z0-9_.-]+$/.test(name)||['/compartilhado.html','/shared.css','/icon-192.png','/icon-512.png','/manifest.webmanifest'].includes(name))||name.includes('..')){miss(res,404);return;}
+  if(!allowedAsset(name)){miss(res,404);return;}
   if(!['GET','HEAD'].includes(req.method)){miss(res,405);return;}
   try{
    let file=path.resolve(path.join(root,name));
@@ -26,7 +34,7 @@ function staticAssets(root,{maxBytes=64*1024*1024}={}){
    if(ext==='.png'&&/image\/webp/i.test(req.headers.accept??'')){
     const variant=file.slice(0,-4)+'.webp';try{const webp=await fs.promises.stat(variant);if(webp.mtimeMs>=stat.mtimeMs&&webp.size<stat.size){file=variant;stat=webp;ext='.webp';}}catch{}
    }
-   const accepted=req.headers['accept-encoding']??'',compressible=['.html','.js','.css','.webmanifest'].includes(ext),encoding=compressible&&stat.size>1024?(acceptsEncoding(accepted,'br')?'br':acceptsEncoding(accepted,'gzip')?'gzip':''):'';
+   const accepted=req.headers['accept-encoding']??'',compressible=['.html','.js','.mjs','.css','.json','.webmanifest'].includes(ext),encoding=compressible&&stat.size>1024?(acceptsEncoding(accepted,'br')?'br':acceptsEncoding(accepted,'gzip')?'gzip':''):'';
    const etag='W/"'+stat.size.toString(16)+'-'+Math.trunc(stat.mtimeMs).toString(16)+'-'+ext.slice(1)+'-'+encoding+'"';
    const headers={'Content-Type':types[ext]??'application/octet-stream','Cache-Control':['.png','.webp','.woff2','.mp3'].includes(ext)?'public, max-age=300, must-revalidate':'no-cache',ETag:etag,'Last-Modified':stat.mtime.toUTCString(),Vary:'Accept, Accept-Encoding','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY','Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=()','Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Resource-Policy':'same-origin','X-Permitted-Cross-Domain-Policies':'none','Content-Security-Policy':"default-src 'self' data: blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"};
    if((req.headers['x-forwarded-proto']??'')==='https')headers['Strict-Transport-Security']='max-age=15552000';
@@ -36,4 +44,4 @@ function staticAssets(root,{maxBytes=64*1024*1024}={}){
   }catch(e){miss(res,e.code==='ENOENT'||e.code==='ENOTDIR'||e.code==='EISDIR'?404:500);}
  };
 }
-module.exports={staticAssets,acceptsEncoding};
+module.exports={staticAssets,acceptsEncoding,allowedAsset};

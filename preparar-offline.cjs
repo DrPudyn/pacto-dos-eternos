@@ -124,6 +124,7 @@ if(!offlineHtml.includes('equipment.css')){offlineHtml=offlineHtml.replace('</he
 let html=offlineHtml.replaceAll('./build/','./shared-build/').replace('</head>','<link rel="stylesheet" href="/shared.css"><link rel="stylesheet" href="/shared-build/codex.css"><link rel="stylesheet" href="/shared-build/festival.css"><link rel="stylesheet" href="/shared-build/refuge.css"></head>');
 html=html.replace('</head>','<link rel="stylesheet" href="/shared-build/campaign.css"><link rel="stylesheet" href="/shared-build/tutorial.css"><link rel="stylesheet" href="/shared-build/mobile.css"></head>');
 fs.writeFileSync(root+'/compartilhado.html',html);
+fs.cpSync(path.join(__dirname,'mapa-vivo'),path.join(__dirname,'minihero-offline/mapa-vivo'),{recursive:true});
 console.log('Adaptador offline instalado.');
 
 // Keep the approved campaign map packaged with every game build.
