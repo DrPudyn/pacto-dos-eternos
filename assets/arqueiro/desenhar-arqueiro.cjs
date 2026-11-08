@@ -114,125 +114,108 @@ function makeWalk(i){
   return g;
 }
 
-// Arco e flecha por cima do corpo estável. Quadro 8 solta a flecha (hitFrame).
-function bow(g,pixels){
-  clearRect(g,17,7,24,16);
+// Ataque, 12 quadros. A mesma flecha não some: sai da aljava, encaixa, desce
+// até a horizontal, a corda puxa, e o quadro 8 (hitFrame) solta na horizontal.
+function bow(g,pixels,quiver){
+  clearRect(g,17,7,30,16);
+  if(quiver) g[13][12]=quiver;
   put(g,pixels);
+  return g;
 }
 function attackFront(){
   const hold=pose(frontIdle);
+  const edge=[[17,11,'K'],[17,12,'K'],[17,13,'K'],[17,15,'K']];
+  const hip=[
+    [19,12,'W'],[20,12,'K'],
+    [19,13,'b'],[20,13,'K'],
+    [18,14,'S'],[19,14,'b'],[20,14,'K'],
+    [19,15,'b'],[20,15,'K'],
+    [19,16,'b'],[20,16,'K']
+  ];
+  // Arco na vertical. A fileira da flecha é desenhada por cima.
+  const stave=(x,y0,y1)=>[
+    [x,y0,'W'],[x+1,y0,'K'],
+    ...Array.from({length:y1-y0},(_,i)=>[[x,y0+1+i,'b'],[x+1,y0+1+i,'K']]).flat(),
+    [x+1,y1+1,'K']
+  ];
   const frames=[clone(hold)];
-  const raise=clone(hold);
-  bow(raise,[
-    [18,9,'W'],[19,9,'K'],
-    [18,10,'w'],[19,10,'K'],
-    [18,11,'b'],[19,11,'K'],
-    [18,12,'b'],[19,12,'K'],
-    [18,13,'b'],[19,13,'K'],
-    [17,14,'S'],[18,14,'b'],[19,14,'K'],
-    [18,15,'b'],[19,15,'K'],
-    [19,16,'K']
-  ]);
-  frames.push(raise);
-  const high=clone(hold);
-  bow(high,[
-    [19,8,'W'],[20,8,'K'],
-    [19,9,'w'],[20,9,'K'],
-    [19,10,'b'],[20,10,'K'],
-    [19,11,'b'],[20,11,'K'],
-    [19,12,'b'],[20,12,'K'],
-    [10,12,'K'],[9,12,'S'],[8,12,'K'],
-    [17,13,'S'],[18,13,'K'],[19,13,'b'],[20,13,'K'],
+  // 1. A mão tira a flecha da aljava. A haste ainda toca o bolso.
+  frames.push(bow(clone(hold),[
+    [9,12,'K'],[9,13,'K'],[9,14,'K'],[10,12,'K'],[10,15,'K'],
+    [10,13,'*'],[11,13,'w'],[12,13,'w'],
+    [10,14,'S'],
+    ...hip, ...edge
+  ]));
+  // 2. Leva a flecha até o arco, ainda baixa, pronta para encaixar.
+  frames.push(bow(clone(hold),[
+    [15,13,'w'],[16,13,'w'],[17,13,'w'],[18,13,'*'],[18,14,'S'],
+    [19,11,'W'],[20,11,'K'],
+    [19,12,'w'],[20,12,'K'],
+    [19,13,'b'],[20,13,'K'],
     [19,14,'b'],[20,14,'K'],
-    [20,15,'K']
-  ]);
-  frames.push(high);
-  const nock=clone(hold);
-  bow(nock,[
-    [19,9,'W'],[20,9,'K'],
-    [16,10,'*'],[17,10,'*'],[18,10,'b'],[19,10,'b'],[20,10,'K'],
-    [19,11,'b'],[20,11,'K'],
-    [19,12,'b'],[20,12,'K'],
-    [17,13,'S'],[18,13,'K'],[19,13,'b'],[20,13,'K'],
-    [19,14,'b'],[20,14,'K'],
-    [20,15,'K']
-  ]);
-  frames.push(nock);
-  const pull=clone(hold);
-  bow(pull,[
-    [20,8,'W'],[21,8,'K'],
-    [18,9,'*'],[19,9,'b'],[20,9,'w'],[21,9,'K'],
-    [17,10,'b'],[20,10,'b'],[21,10,'K'],
-    [16,11,'K'],[17,11,'S'],[20,11,'b'],[21,11,'K'],
-    [20,12,'b'],[21,12,'K'],
-    [20,13,'b'],[21,13,'K'],
-    [17,14,'S'],[20,14,'K']
-  ]);
-  frames.push(pull);
-  const half=clone(hold);
-  bow(half,[
-    [21,7,'*'],[22,7,'K'],
-    [20,8,'*'],[21,8,'b'],[22,8,'K'],
-    [19,9,'b'],[20,9,'w'],[21,9,'K'],
-    [15,10,'K'],[16,10,'S'],[18,10,'w'],[20,10,'b'],[21,10,'K'],
-    [20,11,'b'],[21,11,'K'],
-    [20,12,'b'],[21,12,'K'],
-    [17,13,'h'],[20,13,'b'],[21,13,'K'],
-    [21,14,'K']
-  ]);
-  frames.push(half);
-  const full=clone(hold);
-  bow(full,[
-    [22,7,'*'],
-    [21,8,'*'],[22,8,'b'],
-    [20,9,'b'],[21,9,'K'],
-    [14,10,'K'],[15,10,'S'],[16,10,'K'],[19,10,'w'],[20,10,'K'],
-    [19,11,'b'],[20,11,'K'],[21,11,'K'],
-    [19,12,'b'],[20,12,'K'],
-    [17,13,'S'],[19,13,'b'],[20,13,'K'],
-    [20,14,'K']
-  ]);
-  frames.push(full);
-  const aim=clone(full);
-  put(aim,[[23,7,'*'],[22,7,null],[22,8,'*'],[21,8,'b']]);
-  frames.push(aim);
-  const release=clone(hold);
-  bow(release,[
-    [24,7,'*'],
-    [23,8,'*'],
-    [22,9,'b'],
-    [21,10,'w'],
-    [18,10,'W'],[19,10,'K'],
-    [18,11,'w'],[19,11,'K'],
-    [18,12,'b'],[19,12,'K'],
-    [17,13,'S'],[18,13,'b'],[19,13,'K'],
-    [18,14,'b'],[19,14,'K'],
-    [19,15,'K']
-  ]);
-  frames.push(release);
-  const follow=clone(hold);
-  bow(follow,[
-    [24,6,'*'],
-    [23,7,'*'],
-    [22,8,'b'],
-    [18,11,'W'],[19,11,'K'],[20,11,'K'],
-    [17,12,'S'],[18,12,'b'],[19,12,'K'],
+    [19,15,'b'],[20,15,'K'],
+    [20,16,'K']
+  ],'q'));
+  // 3. Encaixa e sobe. A ponta fica acima do arco, sem soltar.
+  frames.push(bow(clone(hold),[
+    [21,7,'*'],
+    [20,8,'w'],[21,8,'K'],
+    [18,9,'W'],[19,9,'w'],[20,9,'b'],[21,9,'K'],
+    [18,10,'b'],[19,10,'w'],[20,10,'K'],
+    [17,11,'w'],[18,11,'b'],[19,11,'K'],
+    [16,12,'S'],[17,12,'K'],[18,12,'b'],[19,12,'K'],
     [18,13,'b'],[19,13,'K'],
     [18,14,'b'],[19,14,'K'],
     [19,15,'K']
-  ]);
-  frames.push(follow);
-  const lower=clone(hold);
-  bow(lower,[
-    [18,10,'W'],[19,10,'K'],
-    [18,11,'w'],[19,11,'b'],[20,11,'K'],
-    [18,12,'b'],[19,12,'K'],
-    [17,13,'S'],[18,13,'b'],[19,13,'K'],
-    [18,14,'b'],[19,14,'K'],
-    [18,15,'b'],[19,15,'K'],
-    [19,16,'K']
-  ]);
-  frames.push(lower);
+  ],'q'));
+  // 4. A ponta desce. A flecha segue encaixada.
+  frames.push(bow(clone(hold),[
+    [20,9,'W'],[21,9,'K'],
+    [19,10,'w'],[20,10,'b'],[21,10,'*'],
+    [18,11,'w'],[19,11,'w'],[20,11,'b'],[21,11,'K'],
+    [17,12,'w'],[18,12,'K'],[20,12,'b'],[21,12,'K'],
+    [16,13,'S'],[17,13,'K'],[20,13,'b'],[21,13,'K'],
+    [20,14,'b'],[21,14,'K'],
+    [21,15,'K']
+  ],'q'));
+  // 5. Quase na horizontal: a ponta desce até encostar no arco.
+  frames.push(bow(clone(hold),[
+    ...stave(20,10,14),
+    [17,12,'w'],[18,12,'w'],[19,12,'b'],[20,12,'w'],[21,12,'*'],
+    [15,13,'K'],[16,13,'S'],[17,13,'K']
+  ],'q'));
+  // 6. Horizontal, na direção do personagem. Puxada curta.
+  frames.push(bow(clone(hold),[
+    ...stave(20,10,15),
+    [16,13,'K'],[17,13,'S'],[18,13,'K'],[19,13,'w'],[20,13,'b'],[21,13,'*']
+  ],'q'));
+  // 7. Puxada cheia: a mão recua até o rosto e a flecha permanece no arco.
+  frames.push(bow(clone(hold),[
+    [19,10,'K'],[20,10,'W'],[21,10,'K'],
+    [20,11,'w'],[21,11,'K'],
+    [20,12,'b'],[21,12,'K'],
+    [13,13,'K'],[14,13,'S'],[15,13,'K'],[16,13,'w'],[17,13,'w'],[18,13,'w'],[19,13,'b'],[20,13,'w'],[21,13,'*'],
+    [20,14,'b'],[21,14,'K'],
+    [19,15,'K'],[20,15,'w'],[21,15,'K'],
+    [20,16,'K']
+  ],'q'));
+  // 8. hitFrame. A corda volta e a flecha sai na horizontal, separada do arco.
+  frames.push(bow(clone(hold),[
+    ...stave(20,10,15),
+    [18,13,'S'],[19,13,'K'],[20,13,'b'],
+    [23,13,'b'],[24,13,'w'],[25,13,'*']
+  ],'q'));
+  // 9. A flecha segue na mesma linha.
+  frames.push(bow(clone(hold),[
+    ...stave(20,10,15),
+    [18,13,'S'],[19,13,'K'],
+    [26,13,'b'],[27,13,'w'],[28,13,'*']
+  ],'q'));
+  // 10. Recuperação: o arco baixa e a flecha deixa o quadro pela horizontal.
+  frames.push(bow(clone(hold),[
+    ...hip, ...edge,
+    [29,13,'w'],[30,13,'*']
+  ],'q'));
   frames.push(clone(hold));
   if(frames.length!==12) throw Error('Ataque com '+frames.length+' quadros');
   return frames;
@@ -310,12 +293,23 @@ function draw(dir=path.join(__dirname)){
   const idle0=bounds(idle[0]);
   if(idle0.minx!==11||idle0.maxx!==20||idle0.miny!==9||idle0.maxy!==18) throw Error('Pegada do repouso diferente da original '+JSON.stringify(idle0));
   for(let r=0;r<4;r++){
+    for(let f=0;f<=10;f++){
+      let has=false;
+      const g=attack[r*12+f];
+      for(let y=0;y<32;y++) for(let x=0;x<32;x++) if(g[y][x]==='*') has=true;
+      if(!has) throw Error('Flecha sumiu antes da recuperação f'+f+' r'+r);
+    }
     const shot=attack[r*12+8];
-    let tip=-1;
-    for(let y=0;y<32;y++) for(let x=0;x<32;x++) if(shot[y][x]==='*') tip=r%2?Math.min(tip<0?99:tip,x):Math.max(tip,x);
-    if(tip<0) throw Error('Quadro 8 sem flecha, linha '+r);
+    const stars=[];
+    for(let y=0;y<32;y++) for(let x=0;x<32;x++) if(shot[y][x]==='*') stars.push([x,y]);
+    if(stars.length!==1) throw Error('Quadro 8 deve ter uma ponta');
+    const [tip,ty]=stars[0];
     if(r%2===0&&tip<22) throw Error('Flecha pouco separada à direita');
     if(r%2===1&&tip>9) throw Error('Flecha pouco separada à esquerda');
+    const shaft=r%2===0?shot[ty][tip-1]:shot[ty][tip+1];
+    if(!shaft||shaft==='K') throw Error('Flecha do quadro 8 fora da horizontal, linha '+r);
+    const gap=r%2===0?shot[ty][tip-3]:shot[ty][tip+3];
+    if(gap) throw Error('Flecha do quadro 8 sem folga do arco, linha '+r);
   }
   fs.mkdirSync(dir,{recursive:true});
   writePng(path.join(dir,'archer-idle.png'),512,128,sheet(idle,512));
