@@ -18,5 +18,4 @@ const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(W,0);ihdr.writeUInt32BE(H,4);ihdr
 const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',zlib.deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);
 const out=path.join(__dirname,'assets/loja-store-icon.png');
 fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,png);
-fs.copyFileSync(out,path.join(__dirname,'assets/loja-welcome.png'));
-console.log('Ícones da loja gerados em assets/');
+console.log('Ícone da loja gerado em assets/');

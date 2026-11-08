@@ -16,7 +16,6 @@ function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign,
  function choice(title,entries){const forge=title==='FORJAS',notes={'INVOCAR HERÓIS':'Desperte um novo aliado do Pacto.','INVOCAR ARMAS':'Encontre a arma da sua próxima conquista.','FORJAS':'Prepare seus heróis para a próxima batalha.','LÚMINA':'A guardiã que organiza suas forjas.','FUSÃO':'Una seus heróis e desperte um novo poder.','APRIMORAR EQUIPAMENTO':'Alimente suas armas com Brasas do Pacto.','DESMONTAR ARMAS':'Recupere Brasas dos seus equipamentos.'};dx({title,className:'eternal-menu '+(forge?'eternal-menu-forge':'eternal-menu-summon')},body=>{body.classList.add('refuge-choices');body.append(J('p',{class:'eternal-menu-intro',text:forge?'O fogo do Pacto fortalece seus eternos.':'Toda lenda começa com um chamado.'}));for(const [label,img,fn]of entries){const b=Y('alt',()=>{cx();fn();},label),icon=J('span',{class:'refuge-choice-icon',attrs:{'aria-hidden':'true'}});if(img==='ajudante-personagem.png')icon.append(J('span',{class:'mh-assistant-sprite refuge-choice-assistant'}));else if(img==='forge-ui-upgrade'||img==='forge-ui-fusion')icon.append(J('span',{class:'forge-ui-art '+(img==='forge-ui-upgrade'?'forge-ui-anvil':'forge-ui-fusion')}));else if(img)icon.append(J('img',{attrs:{src:new URL('./'+img,import.meta.url).href,alt:''}}));else icon.textContent='✦';b.replaceChildren(icon,J('span',{class:'refuge-choice-copy'},J('span',{class:'refuge-choice-label',text:label}),J('small',{class:'refuge-choice-description',text:notes[label]??''})),J('span',{class:'refuge-choice-arrow',text:'›',attrs:{'aria-hidden':'true'}}));body.append(b);}});}
  const destinations=[
  ['HERÓIS',22,44,()=>go('heroes'),'heroes'],['MASMORRA',26,20,()=>openCampaign?openCampaign():go('dungeon'),'dungeon'],
- ...(showLoja? [['LOJA',62,62,()=>{ex();openLoja?.();},'store']]:[]),
  ['INVOCAÇÕES',50,49,()=>choice('INVOCAÇÕES',[
  ['INVOCAR HERÓIS','pact-book.png',()=>shortcut(2)],['INVOCAR ARMAS','weapon-chest.png',openWeapons]]),'summon'],
  ['BAZAR',73,46,()=>go('market'),'market'],
@@ -25,11 +24,19 @@ function installRefuge({root,openWeapons,openDismantle,openUpgrade,openCampaign,
  ['RANKING',28,71,()=>go('leaderboard'),'ranking'],['TORRE DO INFINITO',88,18,()=>go('tower'),'tower']
  ];
  for(const [label,x,y,fn,kind]of destinations){
-  const b=J('button',{class:'refuge-destination refuge-'+kind,attrs:{type:'button'},style:{left:x+'%',top:y+'%'}},...(kind==='store'?[J('span',{class:'refuge-store-icon',attrs:{'aria-hidden':'true'}}),J('span',{text:label})]:[J('span',{text:label})]));
+  const b=J('button',{class:'refuge-destination refuge-'+kind,attrs:{type:'button'},style:{left:x+'%',top:y+'%'}},J('span',{text:label}));
   b.onclick=fn;nav.append(b);
  }
+ const openShop=()=>{ex();openLoja?.();};
+ const shop=J(showLoja?'button':'div',{class:'refuge-shop-isle'+(showLoja?'':' is-locked'),attrs:showLoja?{type:'button','aria-label':'Abrir loja'}:{'aria-hidden':'true'}},
+  J('img',{class:'refuge-shop-art',attrs:{src:asset('shop-island'),alt:'',draggable:'false'}}),
+  J('span',{class:'refuge-shop-hit',attrs:{'aria-hidden':'true'}}),
+  J('span',{class:'refuge-shop-label',attrs:{'data-no-translate':'true'},text:'LOJA'}));
+ if(showLoja)shop.onclick=openShop;
+ scene.append(shop);
  const mobileNav=J('nav',{class:'refuge-mobile-nav',attrs:{'aria-label':'Destinos para celular'}});
- for(const [label,x,y,fn,kind]of destinations){const button=J('button',{class:'refuge-mobile-link refuge-mobile-'+kind+(kind==='store'?' refuge-mobile-store':''),attrs:{type:'button'},text:label});button.onclick=fn;mobileNav.append(button);}world.append(mobileNav);
+ const mobileDestinations=showLoja?[['LOJA',0,0,openShop,'store'],...destinations]:destinations;
+ for(const [label,x,y,fn,kind]of mobileDestinations){const button=J('button',{class:'refuge-mobile-link refuge-mobile-'+kind,attrs:{type:'button'},text:label});button.onclick=fn;mobileNav.append(button);}world.append(mobileNav);
  const themes={HEROES:'heroes',HERÓIS:'heroes',BLACKSMITHS:'forge',FORJAS:'forge',AJUDANTE:'forge',LÚMINA:'forge',PORTER:'forge',MARKET:'market',MERCADO:'market',SHOP:'market',LOJA:'market','RANKING FESTIVAL':'ranking',SUMMON:'summon',ARMAMENTOS:'summon',FUSION:'summon'};
  const interiorCanvases=new WeakMap();
  function decorate(){for(const page of root.querySelectorAll('.page')){const theme=themes[page.getAttribute('aria-label')];if(theme&&page.dataset.refugeTheme!==theme){page.dataset.refugeTheme=theme;page.style.setProperty('--refuge-interior','url("'+asset(theme)+'")');const c=J('canvas',{class:'refuge-interior-effects',attrs:{width:'836',height:'471','aria-hidden':'true'}});page.append(c);interiorCanvases.set(page,c);}}}

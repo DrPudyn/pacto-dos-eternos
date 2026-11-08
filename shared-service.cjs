@@ -8,7 +8,9 @@ const equipment=require('./equipment-rules.cjs');
 const marketRules=require('./market-rules.cjs');
 const MILLION=1e6;
 const bs58=require('./bs58.cjs');
-const {createAuth}=require('./solana-auth.cjs');
+const {createAuth,isWalletAddress}=require('./solana-auth.cjs');
+function isPlayerNick(name){return typeof name==='string'&&/^[\p{L}\p{N} _-]{2,20}$/u.test(name)&&!isWalletAddress(name);}
+function accountNeedsNick(user){return !isPlayerNick(user?.name)||(!!user?.walletAddress&&user.name===user.walletAddress);}
 const {createLojaService}=require('./loja-service.cjs');
 function service(options={}){
  const dir=options.dir??path.join(__dirname,'dados-compartilhados');fs.mkdirSync(dir,{recursive:true});
@@ -148,7 +150,7 @@ function service(options={}){
  }
  function isAdmin(user){return !!user?.canImport&&user.name?.toLocaleLowerCase()==='admin';}
  function ticketAdmin(user){return isAdmin(user);}
- function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true,loja:true},equipment:equipment.view(e.player),loja:loja.publicView(user),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
+ function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,needsNick:accountNeedsNick(user),walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true,loja:true},equipment:equipment.view(e.player),loja:loja.publicView(user),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
  function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now()&&s.userId!==user.id);db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
  async function handleRequest(req,res,url){
   if(!url.pathname.startsWith('/shared-api/'))return false;
@@ -266,6 +268,14 @@ function service(options={}){
    }
    const user=authenticate(req);if(!user){result(res,401,{error:'Entre no seu perfil para continuar.'});return true;}
    if(tooMany('api:'+user.id,80,10000)){result(res,429,{error:'Muitas ações em seguida. Espere alguns segundos.'});return true;}
+   if(route==='profile/nick'){
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    const name=typeof data.name==='string'?data.name.trim():'';
+    if(!isPlayerNick(name)){result(res,400,{error:'Use um nick de 2 a 20 letras, números, espaços, _ ou -.'});return true;}
+    if(user.name.toLocaleLowerCase()==='admin'){result(res,403,{error:'O perfil do dono mantém o nome admin.'});return true;}
+    if(name.toLocaleLowerCase()==='admin'||db.users.some(u=>u!==user&&u.name.toLocaleLowerCase()===name.toLocaleLowerCase())){result(res,409,{error:'Esse nome já está em uso.'});return true;}
+    user.name=name;persist();result(res,200,payload(user));return true;
+   }
    if(route==='notice/dismiss'){
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
     const id=typeof data.id==='string'?data.id:'';
