@@ -114,6 +114,14 @@ for(const [src,dst] of [['archer-idle.png','archer-idle-P3SxISc4.png'],['archer-
     fs.copyFileSync(from,path.join(dir,dst));
   }
 }
+require('./assets/lanceiro/desenhar-lanceiro.cjs').draw(path.join(__dirname,'assets/lanceiro'));
+for(const [src,dst] of [['spearman-idle.png','spearman-idle-CJGk46vT.png'],['spearman-walk.png','spearman-walk-BS5M27-3.png'],['spearman-attack.png','spearman-attack-C3GjcOso.png']]){
+  const from=path.join(__dirname,'assets/lanceiro',src);
+  for(const dir of [root+'/build',root+'/shared-build']){
+    fs.mkdirSync(dir,{recursive:true});
+    fs.copyFileSync(from,path.join(dir,dst));
+  }
+}
 fs.mkdirSync(root+'/shared-build',{recursive:true});
 for(const file of fs.readdirSync(root+'/build'))if(file!=='shared-app.js')fs.copyFileSync(root+'/build/'+file,root+'/shared-build/'+file);
 fs.writeFileSync(root+'/shared-build/app-0-_Askj9.js',original.replace('$E(sT);export{Jp as t};',shared+'\nexport{Jp as t};'));
