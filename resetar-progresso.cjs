@@ -13,10 +13,10 @@ try{
   for(const key of Object.keys(user))delete user[key];Object.assign(user,identity,{state:starterState(),resetAt:at});
  }
  db.listings=[];db.trades=[];delete db.festival;
- (db.resetHistory??=[]).push({at,users:count,starterScrolls:15,backup:path.relative(__dirname,backup)});
+ (db.resetHistory??=[]).push({at,users:count,starterScrolls:0,backup:path.relative(__dirname,backup)});
  store.save(db);
  for(const file of ['bonus-pendentes.json','eventos-pendentes.json'])if(fs.existsSync(path.join(dir,file)))fs.writeFileSync(path.join(dir,file),'[]');
  const saved=store.load();assert.equal(saved.users.length,count);
- for(const u of saved.users){assert.equal(u.state.balance,0);assert.equal(u.state.player.heroes.length,0);assert.equal(u.state.player.mintCards,15);assert.equal(u.state.player.blacksmiths.length,0);assert.equal(u.state.player.porters.length,0);assert.equal(u.codex,undefined);assert.equal(u.tower,undefined);}
- console.log(JSON.stringify({resetAccounts:count,heroes:0,gold:0,scrollsPerAccount:15,backup}));
+ for(const u of saved.users){assert.equal(u.state.balance,0);assert.equal(u.state.player.heroes.length,0);assert.equal(u.state.player.mintCards,0);assert.equal(u.state.player.blacksmiths.length,0);assert.equal(u.state.player.porters.length,0);assert.equal(u.codex,undefined);assert.equal(u.tower,undefined);}
+ console.log(JSON.stringify({resetAccounts:count,heroes:0,gold:0,scrollsPerAccount:0,backup}));
 }finally{store.close();}
