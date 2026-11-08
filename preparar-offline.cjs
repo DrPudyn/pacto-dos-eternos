@@ -90,11 +90,13 @@ fs.appendFileSync(root+'/build/refuge.css','\n'+fs.readFileSync('screen-transiti
 for(const name of fs.readdirSync('assets').filter(name=>/^campaign-.*\.png$/.test(name)))fs.copyFileSync('assets/'+name,root+'/build/'+name);
 for(const name of fs.readdirSync('assets').filter(name=>/^refuge-.*\.png$/.test(name)))fs.copyFileSync('assets/'+name,root+'/build/'+name);
 original=original.replaceAll('Ajudante','Lúmina').replaceAll('AJUDANTE','LÚMINA');
+original=require('./hero-config.cjs').scaleSwordsman(original);
 fs.copyFileSync('assets/forge-ui-atlas.png',root+'/build/forge-ui-atlas.png');
 original=original.replace('e.chest+=r.mhdg-c,','e.chest+=Math.round((r.mhdg-c)*(e.campaignFarmMultiplier??1)*(1+(e.creatureFarmGoldBonus??0))),');
 const tutorialClient='var mhTutorialSteps='+JSON.stringify(require('./tutorial-content.cjs'))+';\n'+fs.readFileSync('tutorial-client.js','utf8')+'\n'+fs.readFileSync('farm-waves-client.js','utf8');
 fs.copyFileSync('tutorial.css',root+'/build/tutorial.css');
 fs.copyFileSync('mobile.css',root+'/build/mobile.css');
+fs.copyFileSync('hero-scale.css',root+'/build/hero-scale.css');
 const lojaClient=fs.readFileSync('solana-spl-browser.js','utf8')+'\n'+fs.readFileSync('loja-client.js','utf8');
 const skillClient=tutorialClient+'\n'+fs.readFileSync('campaign-atb.js','utf8')+'\n'+fs.readFileSync('campaign-atb-vfx.js','utf8')+'\n'+fs.readFileSync('campaign-atb-client.js','utf8')+'\n'+fs.readFileSync('campaign-tactics.js','utf8')+'\n'+fs.readFileSync('campaign-enemies-client.js','utf8')+'\n'+fs.readFileSync('campaign-defense.js','utf8')+'\n'+fs.readFileSync('hero-rarity-client.js','utf8')+'\n'+fs.readFileSync('screen-transitions.js','utf8')+'\n'+fs.readFileSync('refuge-client.js','utf8')+'\n'+fs.readFileSync('equipment-client.js','utf8')+'\n'+fs.readFileSync('language-client.js','utf8')+'\n'+fs.readFileSync('pact-client.js','utf8')+'\n'+fs.readFileSync('assistant-client.js','utf8')+'\n'+fs.readFileSync('shop-fixed-client.js','utf8')+'\n'+fs.readFileSync('forge-client.js','utf8')+'\n'+fs.readFileSync('skill-client.js','utf8');
 fs.copyFileSync('loja.css',root+'/build/loja.css');
@@ -163,6 +165,7 @@ require('./otimizar-assets.cjs').optimizeAssets(path.join(__dirname,'minihero-of
 for(const file of [root+'/build/app-0-_Askj9.js',root+'/shared-build/app-0-_Askj9.js'])require('./ofuscar-cliente.cjs').obfuscateFile(path.join(__dirname,file));
 const shipped=fs.readFileSync(root+'/shared-build/app-0-_Askj9.js','utf8');
 if(!shipped.includes('hud-loja')||!shipped.includes('LOJA DOS ETERNOS')||!shipped.includes('loja-saco.png')||shipped.includes('hudAllowed'))throw Error('A ofuscação do shared-build removeu o botão LOJA.');
+if(!shipped.includes('38/27')||!shipped.includes('76/27'))throw Error('A ofuscação removeu a escala do espadachim.');
 const page=fs.readFileSync(root+'/compartilhado.html','utf8');
 if(!page.includes('./shared-build/app-0-_Askj9.js')||!page.includes('/shared-build/loja.css'))throw Error('compartilhado.html não aponta para o shared-build da loja.');
 if(fs.readFileSync(root+'/build/app-0-_Askj9.js','utf8').includes('function installLoja'))throw Error('O bundle offline recebeu a loja do modo compartilhado.');
