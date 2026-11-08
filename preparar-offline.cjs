@@ -168,4 +168,5 @@ if(!shipped.includes('hud-loja')||!shipped.includes('LOJA DOS ETERNOS')||!shippe
 if(!shipped.includes('38/27')||!shipped.includes('76/27'))throw Error('A ofuscação removeu a escala do espadachim.');
 const page=fs.readFileSync(root+'/compartilhado.html','utf8');
 if(!page.includes('./shared-build/app-0-_Askj9.js')||!page.includes('/shared-build/loja.css'))throw Error('compartilhado.html não aponta para o shared-build da loja.');
+if(page.includes('farm-preview')||page.includes('PRÉVIA FARM')||offlineHtml.includes('farm-preview'))throw Error('A prévia top-down do farm voltou para o HTML do jogo.');
 if(fs.readFileSync(root+'/build/app-0-_Askj9.js','utf8').includes('function installLoja'))throw Error('O bundle offline recebeu a loja do modo compartilhado.');
