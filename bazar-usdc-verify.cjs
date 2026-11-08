@@ -6,6 +6,8 @@ function fromPayer(row,expect){
  return row.authority===expect.payer||row.source===expect.payerAta;
 }
 // Uma transação só. As duas pernas de USDC precisam existir juntas; saldo parcial não conta.
+// Isto confere os valores quando a transação vem parseada. A entrega do bazar também exige
+// a mensagem exata autorizada pelo servidor; uma transferência parecida, com outra mensagem, não compra.
 function verifySplit(tx,expect){
  if(!tx)return {ok:false,reason:'Transação não encontrada.'};
  if(tx.meta?.err)return {ok:false,reason:'A transação falhou na rede.'};

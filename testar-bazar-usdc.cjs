@@ -5,6 +5,7 @@ const {associatedTokenAddress,decodeAddress}=require('./solana-pubkey.cjs');
 const {load,splitMicro,parsePriceUsdc,DEVELOPER_WALLET,FEE_BPS,SELLER_BPS,MIN_MICRO}=require('./bazar-usdc-config.cjs');
 const {verifySplit}=require('./bazar-usdc-verify.cjs');
 const {createBazarUsdcService}=require('./bazar-usdc-service.cjs');
+const {compileTransaction,createAtaIdempotentIx,transferCheckedIx,messageBytes}=require('./solana-tx-build.cjs');
 const {createEngine}=require('./shared-engine.cjs');
 const {service}=require('./shared-service.cjs');
 const {sharedStore}=require('./shared-store.cjs');
@@ -47,6 +48,10 @@ assert.match(browserSource,/\/shared-api\/bazar-usdc\/rpc/);
 assert.doesNotMatch(adapterSource,/BHSxkg3pmnmmMpiK77yPXgWokaJvSUJ3WynT12c2HjWx/);
 assert.doesNotMatch(browserSource,/BHSxkg3pmnmmMpiK77yPXgWokaJvSUJ3WynT12c2HjWx/);
 assert.doesNotMatch(fs.readFileSync('bot-market.cjs','utf8'),/bazarUsdc/);
+assert.doesNotMatch(fs.readFileSync('bazar-usdc-service.cjs','utf8'),/paid-unfulfilled/);
+assert.match(adapterSource,/O item fica reservado para este pedido/);
+assert.doesNotMatch(adapterSource,/não é entregue de novo/);
+assert.match(browserSource,/Pedido sem a transação autorizada/);
 function wallet(){
  const {publicKey}=crypto.generateKeyPairSync('ed25519');
  return bs58.encode(publicKey.export({type:'spki',format:'der'}).subarray(-32));
@@ -55,20 +60,30 @@ function fakeSig(){return bs58.encode(crypto.randomBytes(64));}
 function checked(source,destination,mint,amount,authority,decimals=6){
  return {parsed:{type:'transferChecked',info:{source,destination,mint,authority,tokenAmount:{amount:String(amount),decimals}}}};
 }
+const databases=[];
+function storedOrder(order){
+ const id=order.orderId||order.id;
+ for(const database of databases){const row=database.bazarUsdcOrders?.find(o=>o.id===id);if(row?.message)return row;}
+ return order;
+}
 function mockTx(order,patch={}){
- const sellerAmt=patch.sellerMicro??order.sellerMicro,feeAmt=patch.feeMicro??order.feeMicro,mint=patch.mint??order.mint;
- const sellerDest=patch.sellerDest??order.sellerAta,feeDest=patch.feeDest??order.developerAta;
- const authority=patch.authority??order.payer,source=patch.source??order.payerAta;
+ const full=storedOrder(order);
+ const sellerAmt=patch.sellerMicro??full.sellerMicro,feeAmt=patch.feeMicro??full.feeMicro,mint=patch.mint??full.mint;
+ const sellerDest=patch.sellerDest??full.sellerAta,feeDest=patch.feeDest??full.developerAta;
+ const authority=patch.authority??full.payer,source=patch.source??full.payerAta;
  const legs=[];
  if(patch.legs!=='fee')legs.push(checked(source,sellerDest,patch.sellerMint??mint,sellerAmt,patch.sellerAuthority??authority,patch.sellerDecimals??6));
  if(patch.legs!=='seller')legs.push(checked(patch.feeSource??source,feeDest,patch.feeMint??mint,feeAmt,patch.feeAuthority??authority,patch.feeDecimals??6));
- const keys=patch.keys??[order.payer,order.reference,order.sellerAta,order.developerAta,order.mint];
+ const keys=patch.keys??[full.payer,full.reference,full.sellerAta,full.developerAta,full.mint];
  const tx={slot:4,blockTime:8,meta:{err:patch.err??null,preTokenBalances:[],postTokenBalances:[]},transaction:{message:{accountKeys:keys,instructions:patch.inner||patch.kind?[]:legs}}};
+ if(patch.message!==false)tx.messageBase64=patch.messageBase64??full.message;
+ if(patch.finalized===false)tx.finalized=false;
+ if(patch.confirmationStatus)tx.confirmationStatus=patch.confirmationStatus;
  if(patch.inner)tx.meta.innerInstructions=[{instructions:legs}];
- if(patch.kind==='transfer')tx.transaction.message.instructions=[{parsed:{type:'transfer',info:{source,destination:sellerDest,mint,amount:String(order.priceMicro),authority}}}];
+ if(patch.kind==='transfer')tx.transaction.message.instructions=[{parsed:{type:'transfer',info:{source,destination:sellerDest,mint,amount:String(full.priceMicro),authority}}}];
  if(patch.kind==='balance'){
-  tx.meta.preTokenBalances=[{accountIndex:2,mint:order.mint,owner:order.sellerWallet,uiTokenAmount:{amount:'0',decimals:6}}];
-  tx.meta.postTokenBalances=[{accountIndex:2,mint:order.mint,owner:order.sellerWallet,uiTokenAmount:{amount:String(order.priceMicro),decimals:6}}];
+  tx.meta.preTokenBalances=[{accountIndex:2,mint:full.mint,owner:full.sellerWallet,uiTokenAmount:{amount:'0',decimals:6}}];
+  tx.meta.postTokenBalances=[{accountIndex:2,mint:full.mint,owner:full.sellerWallet,uiTokenAmount:{amount:String(full.priceMicro),decimals:6}}];
  }
  return tx;
 }
@@ -83,12 +98,35 @@ function engineWith(heroes,weapons=[]){
 }
 function weapon(extra={}){return {id:'arma-usdc',skin:'swordsman',rarity:4,level:7,passive:'crit',heroId:null,favorite:false,failures:2,invested:40,version:3,createdAt:1,...extra};}
 let nowAt=1_700_000_000_000;
+function rpcResult(result){return {ok:true,json:async()=>({result}),text:async()=>JSON.stringify({jsonrpc:'2.0',id:1,result})};}
 function harness(extra={}){
  const cfg={...load({enabled:extra.enabled??true,orderTtlMs:extra.ttl??60_000}),rpc:'https://rpc.teste.invalid'};
  const calls=[],fetchCalls=[];
  const tx=new Map();
- const bazar=createBazarUsdcService({config:cfg,now:()=>nowAt,lojaReceiver:LOJA,getTransaction:async(rpc,sig)=>{calls.push({rpc,sig});if(tx.get(sig)==='throw')throw Error('rede');return tx.has(sig)?tx.get(sig):null;},fetch:async(url,init)=>{fetchCalls.push(String(url));if(String(url).includes('solana.com'))throw Error('rede real bloqueada');return extra.fetch?extra.fetch(url,init):{ok:false,text:async()=>'no'};}});
- return {bazar,cfg,calls,fetchCalls,tx};
+ const net={blockhash:bs58.encode(crypto.randomBytes(32)),lastValidBlockHeight:5000,height:100,valid:true,fail:new Set(),truncated:false,signatures:[]};
+ const bazar=createBazarUsdcService({config:cfg,now:()=>nowAt,lojaReceiver:LOJA,getTransaction:async(rpc,sig)=>{calls.push({rpc,sig});if(String(rpc).includes('solana.com'))throw Error('rede real');if(tx.get(sig)==='throw')throw Error('rede');return tx.has(sig)?tx.get(sig):null;},fetch:async(url,init)=>{
+  const method=init?.body?JSON.parse(init.body).method:'';
+  fetchCalls.push(method||String(url));
+  if(String(url).includes('solana.com')||method==='sendTransaction')throw Error('rede real bloqueada');
+  if(net.fail.has(method)||net.fail.has('all'))throw Error('rede instável');
+  if(method==='getLatestBlockhash')return rpcResult({value:{blockhash:net.blockhash,lastValidBlockHeight:net.lastValidBlockHeight}});
+  if(method==='getBlockHeight')return rpcResult(net.height);
+  if(method==='isBlockhashValid')return rpcResult({value:net.valid});
+  if(method==='getSignaturesForAddress')return rpcResult(net.truncated?Array.from({length:1000},()=>({signature:fakeSig()})):net.signatures.map(signature=>({signature})));
+  return extra.fetch?extra.fetch(url,init):{ok:false,json:async()=>({}),text:async()=>'no'};
+ }});
+ function spawn(){return createBazarUsdcService({config:cfg,now:()=>nowAt,lojaReceiver:LOJA,getTransaction:async(rpc,sig)=>{calls.push({rpc,sig});if(String(rpc).includes('solana.com'))throw Error('rede real');if(tx.get(sig)==='throw')throw Error('rede');return tx.has(sig)?tx.get(sig):null;},fetch:async(url,init)=>{
+  const method=init?.body?JSON.parse(init.body).method:'';
+  fetchCalls.push(method||String(url));
+  if(String(url).includes('solana.com')||method==='sendTransaction')throw Error('rede real bloqueada');
+  if(net.fail.has(method)||net.fail.has('all'))throw Error('rede instável');
+  if(method==='getLatestBlockhash')return rpcResult({value:{blockhash:net.blockhash,lastValidBlockHeight:net.lastValidBlockHeight}});
+  if(method==='getBlockHeight')return rpcResult(net.height);
+  if(method==='isBlockhashValid')return rpcResult({value:net.valid});
+  if(method==='getSignaturesForAddress')return rpcResult(net.truncated?Array.from({length:1000},()=>({signature:fakeSig()})):net.signatures.map(signature=>({signature})));
+  return {ok:false,json:async()=>({}),text:async()=>'no'};
+ }});}
+ return {bazar,cfg,calls,fetchCalls,tx,net,spawn};
 }
 (async()=>{
  const offHits={fetch:0,tx:0};
@@ -104,13 +142,14 @@ function harness(extra={}){
  assert.equal(offHits.tx,0);
  assert.equal((await off.proxyRpc({method:'getFeeForMessage',params:['aa']})).status,503);
  assert.equal(offHits.fetch,0);
- const {bazar,cfg,calls,fetchCalls,tx}=harness();
+ const {bazar,cfg,calls,fetchCalls,tx,net,spawn}=harness();
  assert.equal(cfg.developerWallet,DEVELOPER_WALLET);
  assert.equal(cfg.rpc,'https://rpc.teste.invalid');
  const sellerAddr=wallet(),buyerAddr=wallet();
  const seller={id:'seller',name:'Vendedor',walletAddress:sellerAddr};
  const buyer={id:'buyer',name:'Comprador',walletAddress:buyerAddr};
  const db={users:[seller,buyer],listings:[],bazarUsdcListings:[],bazarUsdcOrders:[],bazarUsdcSignatures:[]};
+ databases.push(db);
  const gear=weapon();
  const equipped=weapon({id:'equipada',heroId:1});
  const favorite=weapon({id:'favorita',favorite:true});
@@ -161,12 +200,26 @@ function harness(extra={}){
  assert.equal(order.developerWallet,DEVELOPER_WALLET);
  assert.equal(order.sellerAta,associatedTokenAddress(sellerAddr,cfg.mint));
  assert.equal(order.developerAta,associatedTokenAddress(DEVELOPER_WALLET,cfg.mint));
- const raw=JSON.stringify(order);
+ const shown={...order};delete shown.transaction;delete shown.blockhash;delete shown.reference;
+ const raw=JSON.stringify(shown);
  assert.equal(raw.includes('http'),false);
  assert.equal(raw.includes('rpc'),false);
- assert.equal(/private|secret/i.test(raw),false);
+ assert.equal(/private|secret/i.test(JSON.stringify(Object.keys(order))),false);
+ const row=db.bazarUsdcOrders.find(o=>o.id===order.orderId);
+ assert.equal(/private|secret/i.test(JSON.stringify(Object.keys(row))),false);
+ const prefix=Buffer.from('302a300506032b6570032100','hex');
+ const pub=crypto.createPublicKey({key:Buffer.concat([prefix,decodeAddress(row.reference)]),format:'der',type:'spki'});
+ assert.equal(crypto.verify(null,Buffer.from(row.message,'base64'),pub,Buffer.from(row.referenceSignature,'base64')),true);
+ const partial=Buffer.from(order.transaction,'base64');
+ assert.equal(partial[0],2);
+ assert.ok(partial.subarray(1,65).every(byte=>byte===0));
+ assert.equal(partial.subarray(65,129).equals(Buffer.from(row.referenceSignature,'base64')),true);
  assert.equal(order.signatureSeen,null);
- await assert.rejects(()=>bazar.cancel(db,seller,sellerEngine,listed.id),/reservado/i);
+ assert.equal(again.transaction,order.transaction);
+ assert.equal(again.reference,order.reference);
+ const reservedCancel=await bazar.cancel(db,seller,sellerEngine,listed.id);
+ assert.equal(reservedCancel.ok,false);
+ assert.match(reservedCancel.error,/reservado/i);
  assert.equal(sellerEngine.player.heroes.some(h=>h.id===1),false);
  const other=engineWith([{...heroTemplate,id:8}]);
  const otherUser={id:'terceiro',name:'Terceiro',walletAddress:wallet()};
@@ -174,7 +227,12 @@ function harness(extra={}){
  async function bad(patch,message){
   const sig=fakeSig();
   tx.set(sig,patch===null?null:mockTx(order,patch||{}));
-  await assert.rejects(()=>bazar.confirm(db,buyer,buyerEngine,{orderId:order.orderId,signature:sig}),message);
+  if(patch===null){
+   const missing=await bazar.confirm(db,buyer,buyerEngine,{orderId:order.orderId,signature:sig});
+   assert.equal(missing.ok,false);
+   assert.equal(missing.persist,true);
+   assert.match(missing.error,/finalizada|não encontrada/);
+  }else await assert.rejects(()=>bazar.confirm(db,buyer,buyerEngine,{orderId:order.orderId,signature:sig}),message);
   assert.equal(buyerEngine.player.heroes.length,1);
   assert.equal(db.bazarUsdcListings[0].status,'reserved');
  }
@@ -246,43 +304,41 @@ function harness(extra={}){
  assert.equal(calls.length,callsAtCancel);
  assert.equal(cancelEngine.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
  assert.equal(cancelEngine.balance,goldBefore);
+ function liveNet(){net.height=100;net.valid=true;net.fail.clear();net.truncated=false;net.signatures=[];net.lastValidBlockHeight=5000;}
  const lateEngine=engineWith([{...heroTemplate,id:50}]);
  const lateRow=await bazar.list(db,seller,lateEngine,{kind:'hero',heroId:50,priceUsdc:'3'});
  const lateBuyer=engineWith([]);
  const lateOrder=await bazar.reserve(db,buyer,lateBuyer,lateRow.id);
  nowAt+=120_000;
- await bazar.cancel(db,seller,lateEngine,lateRow.id);
- assert.equal(lateEngine.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
- const lateSig=fakeSig();tx.set(lateSig,mockTx(lateOrder));
+ await bazar.releaseExpired(db);
+ assert.equal(db.bazarUsdcListings.find(l=>l.id===lateRow.id).status,'reserved');
+ const lateDenied=await bazar.cancel(db,seller,lateEngine,lateRow.id);
+ assert.equal(lateDenied.ok,false);
+ assert.equal(lateEngine.player.heroes.some(h=>h.skillLevels?.precision===2),false);
+ const lateSig=fakeSig();tx.set(lateSig,mockTx(lateOrder));net.signatures=[lateSig];
+ const lateHeld=await bazar.cancel(db,seller,lateEngine,lateRow.id);
+ assert.equal(lateHeld.ok,false);
+ assert.equal(lateHeld.deliver,true);
+ assert.equal(lateEngine.player.heroes.some(h=>h.skillLevels?.precision===2),false);
  const late=await bazar.confirm(db,buyer,lateBuyer,{orderId:lateOrder.orderId,signature:lateSig});
- assert.equal(late.ok,false);
- assert.match(late.error,/não estava reservado/);
- assert.equal(late.persist,true);
- assert.equal(lateBuyer.player.heroes.length,0);
- assert.equal(lateEngine.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ assert.equal(late.delivered,true);
+ assert.equal(lateBuyer.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
  const lateAgain=await bazar.confirm(db,buyer,lateBuyer,{orderId:lateOrder.orderId,signature:lateSig});
- assert.equal(lateAgain.ok,false);
- assert.equal(lateBuyer.player.heroes.length,0);
+ assert.equal(lateAgain.already,true);
+ assert.equal(lateBuyer.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ liveNet();
  const openEngine=engineWith([{...heroTemplate,id:60}]);
  const openRow=await bazar.list(db,seller,openEngine,{kind:'hero',heroId:60,priceUsdc:'4'});
  const openBuyer=engineWith([]);
  const openOrder=await bazar.reserve(db,buyer,openBuyer,openRow.id);
  nowAt+=120_000;
  await bazar.releaseExpired(db);
- assert.equal(db.bazarUsdcListings.find(l=>l.id===openRow.id).status,'open');
+ assert.equal(db.bazarUsdcListings.find(l=>l.id===openRow.id).status,'reserved');
  const openSig=fakeSig();tx.set(openSig,mockTx(openOrder));
  const opened=await bazar.confirm(db,buyer,openBuyer,{orderId:openOrder.orderId,signature:openSig});
  assert.equal(opened.delivered,true);
  assert.equal(openBuyer.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
  assert.equal(openEngine.player.heroes.some(h=>h.id===60),false);
- const stillEngine=engineWith([{...heroTemplate,id:70}]);
- const stillRow=await bazar.list(db,seller,stillEngine,{kind:'hero',heroId:70,priceUsdc:'5'});
- const stillBuyer=engineWith([]);
- const stillOrder=await bazar.reserve(db,buyer,stillBuyer,stillRow.id);
- nowAt+=120_000;
- const stillSig=fakeSig();tx.set(stillSig,mockTx(stillOrder));
- const still=await bazar.confirm(db,buyer,stillBuyer,{orderId:stillOrder.orderId,signature:stillSig});
- assert.equal(still.delivered,true);
  const spaceEngine=engineWith([{...heroTemplate,id:80}]);
  const spaceRow=await bazar.list(db,seller,spaceEngine,{kind:'hero',heroId:80,priceUsdc:'6'});
  const spaceBuyer=engineWith([{...heroTemplate,id:1,skillLevels:{precision:0,swift:0}}]);
@@ -295,6 +351,11 @@ function harness(extra={}){
  assert.equal(waiting.persist,true);
  assert.equal(spaceBuyer.player.heroes.filter(h=>h.skillLevels?.precision===2).length,0);
  assert.equal(db.bazarUsdcSignatures.includes(spaceSig),false);
+ const spaceCancel=await bazar.cancel(db,seller,spaceEngine,spaceRow.id);
+ assert.equal(spaceCancel.ok,false);
+ assert.equal(spaceCancel.deliver,true);
+ assert.equal(spaceEngine.player.heroes.some(h=>h.skillLevels?.precision===2),false);
+ await assert.rejects(()=>bazar.reserve(db,otherUser,engineWith([]),spaceRow.id),/reservou/);
  spaceBuyer.player.heroes.pop();
  const delivered=await bazar.confirm(db,buyer,spaceBuyer,{orderId:spaceOrder.orderId,signature:spaceSig});
  assert.equal(delivered.delivered,true);
@@ -305,6 +366,7 @@ function harness(extra={}){
  const devSeller={id:'dev',name:'Dono',walletAddress:DEVELOPER_WALLET};
  const devEngine=engineWith([{...heroTemplate,id:90}]);
  const devDb={users:[devSeller,buyer],listings:[],bazarUsdcListings:[],bazarUsdcOrders:[],bazarUsdcSignatures:[]};
+ databases.push(devDb);
  const devRow=await bazar.list(devDb,devSeller,devEngine,{kind:'hero',heroId:90,priceUsdc:'1'});
  assert.equal(devRow.payoutWallet,DEVELOPER_WALLET);
  assert.equal(devRow.payoutAta,devRow.developerAta);
@@ -339,30 +401,278 @@ function harness(extra={}){
  const down=await proxy.proxyRpc({method:'sendTransaction',params:['zz']});
  assert.equal(down.status,502);
  assert.equal(JSON.stringify(down).includes('solana.com'),false);
- const blockhash=bs58.encode(crypto.randomBytes(32));
+ let heroSeq=100;
+ async function reservedSale(){
+  liveNet();
+  const id=++heroSeq;
+  const eng=engineWith([{...heroTemplate,id}]);
+  const listed=await bazar.list(db,seller,eng,{kind:'hero',heroId:id,priceUsdc:'1'});
+  const buyerEng=engineWith([]);
+  const placed=await bazar.reserve(db,buyer,buyerEng,listed.id);
+  return {eng,listed,buyerEng,order:placed};
+ }
+ function expire(){net.height=9000;net.valid=false;net.signatures=[];net.fail.clear();net.truncated=false;}
+ {
+  const eng=engineWith([{...heroTemplate,id:++heroSeq}]);
+  const listed=await bazar.list(db,seller,eng,{kind:'hero',heroId:heroSeq,priceUsdc:'1'});
+  net.fail.add('getLatestBlockhash');
+  await assert.rejects(()=>bazar.reserve(db,buyer,engineWith([]),listed.id),/não respondeu/);
+  assert.equal(db.bazarUsdcListings.find(l=>l.id===listed.id).status,'open');
+  assert.equal(db.bazarUsdcOrders.some(o=>o.listingId===listed.id),false);
+  assert.equal(eng.player.heroes.length,0);
+  net.fail.clear();
+  await bazar.reserve(db,buyer,engineWith([]),listed.id);
+  assert.equal(db.bazarUsdcListings.find(l=>l.id===listed.id).status,'reserved');
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  const earlySig=fakeSig();tx.set(earlySig,mockTx(order,{finalized:false,confirmationStatus:'confirmed'}));
+  const early=await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:earlySig});
+  assert.equal(early.ok,false);assert.equal(early.persist,true);assert.match(early.error,/finalizada/);
+  assert.equal(buyerEng.player.heroes.length,0);
+  expire();
+  const denied=await bazar.cancel(db,seller,eng,listed.id);
+  assert.equal(denied.ok,false);
+  assert.equal(eng.player.heroes.length,0);
+  tx.set(earlySig,mockTx(order));net.signatures=[earlySig];
+  const done=await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:earlySig});
+  assert.equal(done.delivered,true);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  expire();
+  const [first,second]=await Promise.allSettled([bazar.cancel(db,seller,eng,listed.id),bazar.cancel(db,seller,eng,listed.id)]);
+  const restored= [first,second].filter(r=>r.status==='fulfilled'&&r.value.ok);
+  assert.equal(restored.length,1);
+  assert.equal([first,second].filter(r=>r.status==='rejected').length,1);
+  assert.equal(eng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+  const lateSig=fakeSig();tx.set(lateSig,mockTx(order));
+  const after=await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:lateSig});
+  assert.equal(after.ok,false);
+  assert.match(after.error,/encerrado|não está mais reservado|custódia/);
+  assert.equal(buyerEng.player.heroes.length,0);
+  assert.equal(eng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  const sig=fakeSig();tx.set(sig,mockTx(order));
+  expire();net.signatures=[sig];
+  const denied=await bazar.cancel(db,seller,eng,listed.id);
+  assert.equal(denied.ok,false);assert.equal(denied.deliver,true);
+  assert.equal(eng.player.heroes.length,0);
+  const [a,b]=await Promise.all([bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig}),bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig})]);
+  assert.equal([a,b].filter(r=>r.delivered).length,1);
+  assert.equal([a,b].filter(r=>r.already).length,1);
+  assert.equal(buyerEng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ }
+ {
+  const {eng,listed}=await reservedSale();
+  expire();
+  net.fail.add('getBlockHeight');
+  const down=await bazar.cancel(db,seller,eng,listed.id);
+  assert.equal(down.ok,false);assert.match(down.error,/continua reservado/);assert.equal(eng.player.heroes.length,0);
+  net.fail.delete('getBlockHeight');net.fail.add('isBlockhashValid');
+  const mid=await bazar.cancel(db,seller,eng,listed.id);
+  assert.equal(mid.ok,false);assert.equal(eng.player.heroes.length,0);
+  net.fail.clear();
+  const freed=await bazar.cancel(db,seller,eng,listed.id);
+  assert.equal(freed.ok,true);
+  assert.equal(eng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ }
+ {
+  const {eng,listed}=await reservedSale();
+  net.height=9000;net.valid=true;
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,false);
+  net.height=100;net.valid=false;
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,false);
+  assert.equal(eng.player.heroes.length,0);
+  expire();
+  const ghost=fakeSig();net.signatures=[ghost];
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,false);
+  tx.set(ghost,'throw');
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,false);
+  const callsBefore=calls.length;net.truncated=true;
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,false);
+  assert.equal(calls.length,callsBefore);
+  assert.equal(eng.player.heroes.length,0);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  const snap=JSON.parse(JSON.stringify(db));
+  const revived=spawn();
+  const sig=fakeSig();tx.set(sig,mockTx(order));
+  const done=await revived.confirm(snap,buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(done.delivered,true);
+  const snap2=JSON.parse(JSON.stringify(snap));
+  const replay=await spawn().confirm(snap2,buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(replay.already,true);
+  assert.equal(buyerEng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+  assert.equal(db.bazarUsdcListings.find(l=>l.id===listed.id).status,'reserved');
+ }
+ {
+  const {buyerEng,order}=await reservedSale();
+  const sig=fakeSig();tx.set(sig,mockTx(order,{finalized:false}));
+  const pending=await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(pending.ok,false);
+  const snap=JSON.parse(JSON.stringify(db));
+  tx.set(sig,mockTx(order));
+  const done=await spawn().confirm(snap,buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(done.delivered,true);
+  const again=await spawn().confirm(JSON.parse(JSON.stringify(snap)),buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(again.already,true);
+  assert.equal(buyerEng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  const oldMessage=storedOrder(order).message,oldTx=order.transaction,oldReference=order.reference;
+  const same=await bazar.reserve(db,buyer,buyerEng,listed.id);
+  assert.equal(same.transaction,oldTx);
+  expire();
+  net.blockhash=bs58.encode(crypto.randomBytes(32));net.lastValidBlockHeight=20000;
+  const rotated=await bazar.reserve(db,buyer,buyerEng,listed.id);
+  assert.notEqual(rotated.transaction,oldTx);
+  assert.notEqual(rotated.reference,oldReference);
+  assert.equal(rotated.orderId,order.orderId);
+  assert.equal(db.bazarUsdcListings.find(l=>l.id===listed.id).status,'reserved');
+  net.height=100;net.valid=true;
+  const staleSig=fakeSig();tx.set(staleSig,mockTx(order,{messageBase64:oldMessage}));
+  await assert.rejects(()=>bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:staleSig}),/autorizada/);
+  assert.equal(buyerEng.player.heroes.length,0);
+  const newSig=fakeSig();tx.set(newSig,mockTx(order));
+  assert.equal((await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:newSig})).delivered,true);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,false);
+  expire();
+  await assert.rejects(()=>bazar.reserve(db,buyer,buyerEng,listed.id),/cancelamento/);
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,true);
+  assert.equal(eng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  const sig=fakeSig();tx.set(sig,mockTx(order));net.signatures=[sig];
+  const again=await bazar.reserve(db,buyer,buyerEng,listed.id);
+  assert.equal(again.reference,order.reference);
+  assert.equal(again.signatureSeen,sig);
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).deliver,true);
+  assert.equal((await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig})).delivered,true);
+ }
+ {
+  const {eng,listed}=await reservedSale();
+  expire();
+  await assert.rejects(()=>bazar.reserve(db,otherUser,engineWith([]),listed.id),/reservou/);
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,true);
+  assert.equal(eng.player.heroes.length,1);
+ }
+ {
+  liveNet();
+  const eng=engineWith([{...heroTemplate,id:++heroSeq}]);
+  const listed=await bazar.list(db,seller,eng,{kind:'hero',heroId:heroSeq,priceUsdc:'1'});
+  const before=fetchCalls.length;
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,true);
+  assert.equal(fetchCalls.slice(before).includes('getBlockHeight'),false);
+  assert.equal(fetchCalls.includes('sendTransaction'),false);
+  assert.equal(eng.player.heroes.length,1);
+ }
+ {
+  const {eng,listed,buyerEng,order}=await reservedSale();
+  const row=storedOrder(order);
+  const foreign=compileTransaction({feePayer:row.payer,recentBlockhash:row.blockhash,instructions:[
+   createAtaIdempotentIx(row.payer,row.sellerWallet,row.mint,row.sellerAta),
+   createAtaIdempotentIx(row.payer,row.developerWallet,row.mint,row.developerAta),
+   transferCheckedIx(row.payerAta,row.mint,row.sellerAta,row.payer,row.sellerMicro,6,[row.reference]),
+   transferCheckedIx(row.payerAta,row.mint,row.developerAta,row.payer,row.feeMicro,6,[row.reference]),
+  ]});
+  const foreignSig=fakeSig();tx.set(foreignSig,mockTx(order,{messageBase64:messageBytes(foreign).toString('base64')}));
+  await assert.rejects(()=>bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:foreignSig}),/autorizada/);
+  assert.equal(db.bazarUsdcListings.find(l=>l.id===listed.id).status,'reserved');
+  expire();net.signatures=[foreignSig];
+  assert.equal((await bazar.cancel(db,seller,eng,listed.id)).ok,true);
+  assert.equal(buyerEng.player.heroes.length,0);
+  assert.equal(eng.player.heroes.length,1);
+ }
+ {
+  const {buyerEng,order}=await reservedSale();
+  const blank=fakeSig();tx.set(blank,{slot:4,meta:{err:null},transaction:[order.transaction,'base64']});
+  await assert.rejects(()=>bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:blank}),/autorizada|incompleta|não encontrada/);
+  assert.equal(buyerEng.player.heroes.length,0);
+  const full=Buffer.from(order.transaction,'base64');full[1]=7;
+  const landed=fakeSig();tx.set(landed,{slot:9,meta:{err:null},transaction:[full.toString('base64'),'base64']});
+  assert.equal((await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:landed})).delivered,true);
+ }
+ {
+  const {buyerEng,order,listed}=await reservedSale();
+  const listing=db.bazarUsdcListings.find(l=>l.id===listed.id);
+  const sig=fakeSig();tx.set(sig,mockTx(order));
+  db.bazarUsdcListings=db.bazarUsdcListings.filter(l=>l.id!==listed.id);
+  const held=await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(held.ok,false);assert.match(held.error,/não está mais reservado/);
+  assert.equal(db.bazarUsdcSignatures.includes(sig),false);
+  assert.equal(buyerEng.player.heroes.length,0);
+  listing.status='open';listing.orderId=null;
+  db.bazarUsdcListings.push(listing);
+  assert.equal((await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig})).delivered,true);
+ }
+ {
+  const {buyerEng,order,listed}=await reservedSale();
+  const listing=db.bazarUsdcListings.find(l=>l.id===listed.id);
+  listing.orderId='outro-pedido';
+  const sig=fakeSig();tx.set(sig,mockTx(order));
+  const blocked=await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig});
+  assert.equal(blocked.ok,false);
+  assert.equal(buyerEng.player.heroes.length,0);
+  listing.orderId=order.orderId;
+  assert.equal((await bazar.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig})).delivered,true);
+ }
+ {
+  liveNet();
+  const engA=engineWith([{...heroTemplate,id:++heroSeq}]);
+  const listed=await bazar.list(db,seller,engA,{kind:'hero',heroId:heroSeq,priceUsdc:'1'});
+  const [a,b]=await Promise.allSettled([bazar.reserve(db,buyer,engineWith([]),listed.id),bazar.reserve(db,otherUser,engineWith([]),listed.id)]);
+  assert.equal(a.status==='fulfilled'&&b.status==='rejected'||b.status==='fulfilled'&&a.status==='rejected',true);
+  assert.equal(db.bazarUsdcListings.find(l=>l.id===listed.id).status,'reserved');
+ }
+ {
+  const {buyerEng,order}=await reservedSale();
+  const full=Buffer.from(order.transaction,'base64');full[1]=9;
+  const seen=[];
+  const direct=createBazarUsdcService({config:cfg,now:()=>nowAt,lojaReceiver:LOJA,fetch:async(url,init)=>{
+   const body=JSON.parse(init.body);seen.push(body.method);
+   assert.equal(String(url).includes('solana.com'),false);
+   if(body.method!=='getTransaction')throw Error('método inesperado');
+   if(body.params[1].commitment!=='finalized'||body.params[1].encoding!=='base64')throw Error('compromisso errado');
+   return rpcResult({slot:3,meta:{err:null},transaction:[full.toString('base64'),'base64']});
+  }});
+  const sig=fakeSig();
+  assert.equal((await direct.confirm(db,buyer,buyerEng,{orderId:order.orderId,signature:sig})).delivered,true);
+  assert.deepEqual(seen,['getTransaction']);
+  assert.equal(buyerEng.player.heroes.filter(h=>h.skillLevels?.precision===2).length,1);
+ }
+ assert.equal(db.bazarUsdcOrders.some(o=>o.status==='paid-unfulfilled'),false);
+ assert.equal(devDb.bazarUsdcOrders.some(o=>o.status==='paid-unfulfilled'),false);
+ assert.equal(fetchCalls.includes('sendTransaction'),false);
  const browserCalls=[];
  const browser=vm.runInNewContext(browserSource+'\n({build:mhSolanaBuildBazarTx,fee:mhSolanaNetworkFee})',{
-  crypto,TextEncoder,Uint8Array,AbortController,setTimeout,clearTimeout,BigInt,DataView,ArrayBuffer,Map,btoa,fetch:async(url,init)=>{
+  crypto,TextEncoder,Uint8Array,AbortController,setTimeout,clearTimeout,BigInt,DataView,ArrayBuffer,Map,btoa,atob:s=>Buffer.from(s,'base64').toString('binary'),fetch:async(url,init)=>{
    const body=JSON.parse(init.body);browserCalls.push({url:String(url),method:body.method});
-   if(body.method==='sendTransaction')throw Error('não enviar');
-   if(body.method==='getLatestBlockhash')return {ok:true,json:async()=>({result:{value:{blockhash}}})};
+   if(body.method==='sendTransaction'||body.method==='getLatestBlockhash')throw Error('não enviar');
    if(body.method==='getFeeForMessage')return {ok:true,json:async()=>({result:{value:5000}})};
    throw Error('método inesperado');
   }
  });
- const builtOrder={sellerAta:associatedTokenAddress(sellerAddr,cfg.mint),developerAta:associatedTokenAddress(DEVELOPER_WALLET,cfg.mint),payerAta:associatedTokenAddress(buyerAddr,cfg.mint),reference:bs58.encode(crypto.randomBytes(32)),sellerWallet:sellerAddr,developerWallet:DEVELOPER_WALLET,payer:buyerAddr,mint:cfg.mint,decimals:6,sellerMicro:850000,feeMicro:150000,priceMicro:1000000};
- const wire=Buffer.from(await browser.build(builtOrder,buyerAddr));
+ const wire=Buffer.from(await browser.build(order,buyerAddr));
  function le(n){const b=Buffer.alloc(8);b.writeBigUInt64LE(BigInt(n));return b;}
- assert.ok(wire.includes(Buffer.concat([Buffer.from([12]),le(850000),Buffer.from([6])])));
- assert.ok(wire.includes(Buffer.concat([Buffer.from([12]),le(150000),Buffer.from([6])])));
- assert.ok(wire.includes(bs58.decode(builtOrder.reference)));
- assert.ok(wire.includes(bs58.decode(builtOrder.sellerAta)));
- assert.ok(wire.includes(bs58.decode(builtOrder.developerAta)));
+ assert.equal(wire.toString('base64'),order.transaction);
+ assert.equal(wire[0],2);
+ assert.ok(wire.includes(Buffer.concat([Buffer.from([12]),le(order.sellerMicro),Buffer.from([6])])));
+ assert.ok(wire.includes(Buffer.concat([Buffer.from([12]),le(order.feeMicro),Buffer.from([6])])));
+ assert.ok(wire.includes(decodeAddress(order.reference)));
  assert.equal(await browser.fee(wire),5000);
- assert.deepEqual(browserCalls.map(c=>c.method),['getLatestBlockhash','getFeeForMessage']);
+ assert.deepEqual(browserCalls.map(c=>c.method),['getFeeForMessage']);
  assert.ok(browserCalls.every(c=>c.url==='/shared-api/bazar-usdc/rpc'));
- assert.equal(fetchCalls.some(url=>url.includes('solana.com')),false);
- console.log('Direto: divisão, snapshots, reserva, falhas, entrega, reembolso ausente e transação simulada. Nenhuma rede Solana foi contatada.');
+ assert.equal(fetchCalls.some(url=>String(url).includes('solana.com')),false);
+ console.log('Direto: reserva assinada, prova de expiração, entrega idempotente e transação simulada. Nenhuma rede Solana foi contatada.');
  await httpFlow();
  console.log('OK bazar USDC. devnet/mainnet não foram usados e nenhum SOL ou USDC foi gasto.');
 })().catch(e=>{console.error(e);process.exit(1);});
@@ -370,8 +680,19 @@ function harness(extra={}){
 async function httpFlow(){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pacto-bazar-usdc-'));
  const tx=new Map();const calls=[];let fetches=0;
+ const net={blockhash:bs58.encode(crypto.randomBytes(32)),lastValidBlockHeight:5000,height:100,valid:true,signatures:[]};
  async function getTransaction(rpc,sig){calls.push({rpc,sig});if(String(rpc).includes('solana.com'))throw Error('rede real');if(tx.get(sig)==='throw')throw Error('rede');return tx.has(sig)?tx.get(sig):null;}
- async function fetchImpl(url){fetches++;if(String(url).includes('solana.com'))throw Error('rede real');throw Error('proxy desligado no teste');}
+ async function fetchImpl(url,init){
+  fetches++;
+  if(String(url).includes('solana.com'))throw Error('rede real');
+  const body=init?.body?JSON.parse(init.body):{};
+  if(body.method==='sendTransaction')throw Error('não enviar');
+  if(body.method==='getLatestBlockhash')return rpcResult({value:{blockhash:net.blockhash,lastValidBlockHeight:net.lastValidBlockHeight}});
+  if(body.method==='getBlockHeight')return rpcResult(net.height);
+  if(body.method==='isBlockhashValid')return rpcResult({value:net.valid});
+  if(body.method==='getSignaturesForAddress')return rpcResult(net.signatures.map(signature=>({signature})));
+  throw Error('proxy desligado no teste');
+ }
  let app=service({dir,fetch:fetchImpl,getTransaction});
  const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://127.0.0.1');app.handle(req,res,url);});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -460,15 +781,17 @@ async function httpFlow(){
   const winner=ok[0].cookie;
   assert.equal(order.sellerWallet,sellerAddr);
   assert.equal(order.developerWallet,DEVELOPER_WALLET);
-  assert.equal(JSON.stringify(order).includes('http'),false);
+  const shownOrder={...order};delete shownOrder.transaction;delete shownOrder.blockhash;delete shownOrder.reference;
+  assert.equal(JSON.stringify(shownOrder).includes('http'),false);
   const sellerCancel=await call('bazar-usdc/cancelar',{id:usdc.value.listings[0].id},a.cookie);
-  assert.equal(sellerCancel.status,400);
+  assert.equal(sellerCancel.status,409);
   assert.match(sellerCancel.value.error,/reservado/i);
-  const badSig=fakeSig();tx.set(badSig,mockTx(order,{legs:'seller'}));
+  const stored=JSON.parse(fs.readFileSync(path.join(dir,'jogadores.json'),'utf8')).bazarUsdcOrders.find(o=>o.id===order.orderId);
+  const badSig=fakeSig();tx.set(badSig,mockTx({...order,message:stored.message},{legs:'seller'}));
   const bad=await call('bazar-usdc/confirmar',{orderId:order.orderId,signature:badSig},winner);
   assert.equal(bad.status,400);
   assert.equal((await call('state',undefined,winner)).value.packet.player.heroes.filter(h=>h.skillLevels?.precision===2).length,0);
-  const goodSig=fakeSig();tx.set(goodSig,mockTx(order));
+  const goodSig=fakeSig();tx.set(goodSig,mockTx({...order,message:stored.message}));
   const good=await call('bazar-usdc/confirmar',{orderId:order.orderId,signature:goodSig},winner);
   assert.equal(good.status,200);
   assert.equal(good.value.packet.player.heroes.filter(h=>h.skillLevels?.precision===2&&h.skillXpTicks===80).length,1);
@@ -487,5 +810,26 @@ async function httpFlow(){
   const self=await call('bazar-usdc/reservar',{id:usdc.value.listings[0].id},a.cookie);
   assert.equal(self.status,400);
   assert.match(self.value.error,/removido|próprio/);
+  const secondListing=await call('bazar-usdc/anunciar',{kind:'hero',heroId:2,priceUsdc:'1'},a.cookie);
+  assert.equal(secondListing.status,200);
+  const reserved=await call('bazar-usdc/reservar',{id:secondListing.value.bazarListing.id},b.cookie);
+  assert.equal(reserved.status,200);
+  const row=JSON.parse(fs.readFileSync(path.join(dir,'jogadores.json'),'utf8')).bazarUsdcOrders.find(o=>o.id===reserved.value.bazarOrder.orderId);
+  const paidSig=fakeSig();tx.set(paidSig,mockTx({...reserved.value.bazarOrder,message:row.message}));net.signatures=[paidSig];
+  const sellerLate=await call('bazar-usdc/cancelar',{id:secondListing.value.bazarListing.id},a.cookie);
+  assert.equal(sellerLate.status,409);
+  assert.match(sellerLate.value.error,/entregue/);
+  const buyerAfter=await call('state',undefined,b.cookie);
+  assert.equal(buyerAfter.value.packet.player.heroes.filter(h=>h.id!==1).length>=1,true);
+  const sellerKept=await call('state',undefined,a.cookie);
+  assert.equal(sellerKept.value.packet.player.heroes.some(h=>h.id===2),false);
+  net.height=9000;net.valid=false;net.signatures=[];
+  const third=await call('bazar-usdc/anunciar',{kind:'hero',heroId:sellerKept.value.packet.player.heroes[0]?.id??0,priceUsdc:'1'},a.cookie);
+  if(third.status===200){
+   const hold=await call('bazar-usdc/reservar',{id:third.value.bazarListing.id},b.cookie);
+   assert.equal(hold.status,200);
+   const cleared=await call('bazar-usdc/cancelar',{id:third.value.bazarListing.id},a.cookie);
+   assert.equal(cleared.status,200);
+  }
  }finally{app.close();server.close();}
 }

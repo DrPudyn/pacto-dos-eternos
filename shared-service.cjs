@@ -471,7 +471,20 @@ function service(options={}){
    function bazarBusy(){if(user.tower?.status==='active')throw Error('Encerre a Torre antes de negociar no bazar em USDC.');}
    if(route==='bazar-usdc/cotar'&&req.method==='POST'){result(res,200,{quote:bazar.quote(data.priceUsdc)});return true;}
    if(route==='bazar-usdc/anunciar'&&req.method==='POST'){bazarBusy();const listed=await bazar.list(db,user,engine,{kind:data.kind,heroId:data.heroId,weaponId:data.weaponId,priceUsdc:data.priceUsdc});festival.updatePower(user,clock());persist();result(res,200,{...payload(user),bazarListing:listed});return true;}
-   if(route==='bazar-usdc/cancelar'&&req.method==='POST'){bazarBusy();await bazar.cancel(db,user,engine,data.id);festival.updatePower(user,clock());persist();result(res,200,payload(user));return true;}
+   if(route==='bazar-usdc/cancelar'&&req.method==='POST'){
+    bazarBusy();
+    const outcome=await bazar.cancel(db,user,engine,data.id);
+    if(outcome.deliver){
+     const buyerUser=db.users.find(u=>u.id===outcome.buyerId);
+     let delivered=null;
+     if(buyerUser&&outcome.signature){try{delivered=await bazar.confirm(db,buyerUser,actor(buyerUser),{orderId:outcome.orderId,signature:outcome.signature});}catch(error){delivered={ok:false,persist:false,error:error.message};}}
+     if(outcome.persist||delivered?.persist){festival.updatePower(user,clock());if(buyerUser)festival.updatePower(buyerUser,clock());persist();}
+     result(res,409,{error:delivered?.ok?'O pagamento deste comprador já foi finalizado na rede. O item foi entregue a ele. O anúncio não voltou para você.':(delivered?.error||outcome.error)});
+     return true;
+    }
+    if(!outcome.ok){if(outcome.persist){festival.updatePower(user,clock());persist();}result(res,409,{error:outcome.error});return true;}
+    festival.updatePower(user,clock());persist();result(res,200,payload(user));return true;
+   }
    if(route==='bazar-usdc/reservar'&&req.method==='POST'){bazarBusy();const order=await bazar.reserve(db,user,engine,data.id);persist();result(res,200,{...payload(user),bazarOrder:order});return true;}
    if(route==='bazar-usdc/confirmar'&&req.method==='POST'){
     bazarBusy();

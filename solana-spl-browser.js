@@ -144,25 +144,25 @@ async function mhSolanaBuildLojaTx(order,payer){
   ],
  });
 }
+function mhSolanaWireMessage(wire){
+ const count=wire[0]&0x7f;
+ return wire.slice(1+count*64);
+}
+// O jogo autoriza a mensagem e o bloco. O navegador só pede à carteira que assine esse wire.
 async function mhSolanaBuildBazarTx(order,payer){
- const block=await mhSolanaRpc('getLatestBlockhash',[{commitment:'finalized'}],'/shared-api/bazar-usdc/rpc');
- const blockhash=block?.value?.blockhash;
- if(!blockhash)throw Error('Não foi possível obter o bloco da Solana. Tente novamente em instantes.');
- if(!order?.sellerAta||!order?.developerAta||!order?.payerAta||!order?.reference)throw Error('Pedido incompleto. Reserve o anúncio de novo.');
- if(order.sellerMicro+order.feeMicro!==order.priceMicro)throw Error('A divisão deste pedido não fecha com o preço.');
- return mhSolanaCompileTx({
-  feePayer:payer,
-  recentBlockhash:blockhash,
-  instructions:[
-   mhSolanaAtaIx(payer,order.sellerWallet,order.mint,order.sellerAta),
-   mhSolanaAtaIx(payer,order.developerWallet,order.mint,order.developerAta),
-   mhSolanaTransferCheckedIx(order.payerAta,order.mint,order.sellerAta,payer,order.sellerMicro,order.decimals,[order.reference]),
-   mhSolanaTransferCheckedIx(order.payerAta,order.mint,order.developerAta,payer,order.feeMicro,order.decimals,[order.reference]),
-  ],
- });
+ if(!order?.transaction||order.sellerMicro+order.feeMicro!==order.priceMicro)throw Error('Pedido sem a transação autorizada pelo jogo. Reserve o anúncio de novo.');
+ if(payer&&order.payer&&payer!==order.payer)throw Error('A transação autorizada é da carteira vinculada a este perfil.');
+ const raw=atob(order.transaction);
+ const wire=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)wire[i]=raw.charCodeAt(i)&255;
+ if(wire[0]!==2)throw Error('A transação autorizada está incompleta. Reserve o anúncio de novo.');
+ let signed=false;
+ for(let i=65;i<129;i++)if(wire[i]!==0)signed=true;
+ if(!signed)throw Error('A transação autorizada está incompleta. Reserve o anúncio de novo.');
+ return wire;
 }
 async function mhSolanaNetworkFee(wire){
- const message=wire.slice(1+64);
+ const message=mhSolanaWireMessage(wire);
  let binary='';
  for(const byte of message)binary+=String.fromCharCode(byte);
  const result=await mhSolanaRpc('getFeeForMessage',[btoa(binary),{commitment:'confirmed'}],'/shared-api/bazar-usdc/rpc');
