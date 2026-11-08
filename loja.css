@@ -1,0 +1,26 @@
+.loja-dialog .loja-body{max-width:min(920px,96vw);display:grid;gap:14px}
+.loja-intro{color:#e8d5a8;font-size:13px;text-align:center;margin:0}
+.loja-balances{border:1px solid #4a3b28;border-radius:10px;padding:10px 14px;background:#121820cc}
+.loja-balance-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:12px 20px;font-size:13px;color:#ffe9b0}
+.loja-products{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.loja-product{position:relative;display:grid;gap:8px;justify-items:center;text-align:center;padding:14px 10px 12px;border:2px solid #5c4a32;border-radius:12px;background:linear-gradient(180deg,#1c2430 0%,#111820 100%);color:#f7e7b8;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.loja-product[aria-pressed=true]{border-color:#e8b84a;box-shadow:0 0 18px #e8b84a55,inset 0 0 12px #e8b84a22}
+.loja-product-highlight{border-color:#c9a227;background:linear-gradient(180deg,#2a2418 0%,#151c26 55%,#101820 100%);animation:loja-glow 3s ease-in-out infinite}
+@keyframes loja-glow{0%,100%{box-shadow:0 0 12px #ffd56a33}50%{box-shadow:0 0 22px #ffd56a66}}
+.loja-badge{position:absolute;top:8px;right:8px;background:#c41e3a;color:#fff;font-weight:800;font-size:11px;padding:3px 7px;border-radius:6px;letter-spacing:.04em;box-shadow:0 2px 6px #0008}
+.loja-product-art img{width:56px;height:56px;image-rendering:pixelated;object-fit:contain;filter:drop-shadow(0 0 6px #ffe38a66)}
+.loja-product-price{color:#ffe38a;font-size:14px}
+.loja-product-sold{color:#ff9f9f}
+.loja-checkout{border:1px solid #4a3b28;border-radius:10px;padding:12px 14px;background:#0f141acc;display:grid;gap:8px}
+.loja-checkout label{font-size:12px;color:#cbb98d}
+.loja-checkout select,.loja-checkout input{background:#1a222c;border:1px solid #4a3b28;color:#fff;border-radius:6px;padding:8px}
+.loja-total{font-weight:700;color:#ffe9b0;margin:0}
+.loja-message{min-height:1.2em;color:#ffb4b4;text-align:center;margin:0}
+.loja-soon{font-size:20px;text-align:center;color:#cbb98d;padding:32px;letter-spacing:.2em}
+.refuge-destination.refuge-store::before{content:'';position:absolute;inset:-10%;background:radial-gradient(circle,#ffe9a044 0%,transparent 70%);pointer-events:none;animation:loja-glow 2.5s ease-in-out infinite}
+.refuge-store .refuge-store-icon{display:block;width:36px;height:36px;margin:0 auto 4px;background:url('./loja-store-icon.png') center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 8px #ffe9a0aa)}
+.refuge-mobile-store .refuge-mobile-link::before{content:'◆ ';color:#ffd56a}
+.lobby-loja-shortcut{position:absolute;right:12px;bottom:108px;z-index:12;display:grid;justify-items:center;gap:4px;padding:0;border:none;background:none;cursor:pointer}
+.lobby-loja-shortcut img{width:52px;height:52px;image-rendering:pixelated;filter:drop-shadow(0 0 10px #ffe38a99);animation:loja-glow 3s ease-in-out infinite}
+.lobby-loja-shortcut span{font:700 10px/1.2 system-ui,sans-serif;color:#ffe9b0;letter-spacing:.12em;text-shadow:0 1px 4px #000}
+.has-refuge .lobby-loja-shortcut{bottom:140px}

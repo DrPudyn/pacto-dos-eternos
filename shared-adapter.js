@@ -125,7 +125,18 @@ async function startShared(){
   Zx=(ctx,item)=>{const cost=item.kind==='porter'?current.packet.porterPrice:item.kind==='fusion'?Zn(item.rarity,item.count).price:ax(item);dx({title:'CONFIRMAR COMPRA'},(body)=>{const message=J('p',{class:'shared-error'}),confirm=Y('main',async()=>{confirm.disabled=true;try{await mutate('purchase',{product:Rx(item)});cx();if(item.kind!=='summon'&&item.kind!=='fusion')$('Compra concluída.','success');}catch(e){message.textContent=e.message;confirm.disabled=false;}},'CONFIRMAR');body.append(Ux(item),J('p',{text:`Custo: ${H(cost??0)} MHDG. Saldo: ${H(balance)}. Moedas fictícias, sem dinheiro real.`}),...(item.kind==='fusion'?[J('p',{class:'mh-fusion-warning',text:'A fusão consome os heróis selecionados. Toda a XP e os níveis de skills deles serão perdidos. O novo herói começa com XP 0 e skills no nível 0.'})]:[]),message,confirm,Y('alt',cx,'CANCELAR'));});};
   wS=()=>{dx({title:'RETIRAR DO BAÚ'},body=>{const message=J('p',{class:'shared-error'}),button=Y('main',async()=>{button.disabled=true;try{await mutate('withdraw',{});cx();$('Moedas transferidas para o seu saldo.','success');}catch(e){message.textContent=e.message;button.disabled=false;}},'TRANSFERIR PARA O SALDO');body.append(J('p',{text:`Baú: ${H(current.packet.player.chest)} MHDG locais.`}),button,message);});};KC=board;
   const campaignUI=installCampaign({root,getCurrent:()=>current,request,sync,openFreeDungeon:()=>root.querySelector('.mode-dungeon')?.click()});
-  installRefuge({root,openWeapons:()=>gearUI?.openBoxes(),openUpgrade:()=>gearUI?.openUpgrade(),openDismantle:()=>gearUI?.openBag({mode:'dismantle'}),openCampaign:()=>campaignUI.open()});
+  const lojaUI=installLoja({root,getCurrent:()=>current,perform:mutate,getWallet:()=>{for(const row of mhSolanaProviders())if(row.provider?.publicKey)return row.provider;return null;}});
+  globalThis.mhLojaRevealCtx={panels:{heroes:e=>root.querySelector('.mode-heroes')?.click()}};
+  const openLoja=()=>lojaUI.open();
+  const showLoja=()=>!!current.tutorial?.completed;
+  installRefuge({root,openWeapons:()=>gearUI?.openBoxes(),openUpgrade:()=>gearUI?.openUpgrade(),openDismantle:()=>gearUI?.openBag({mode:'dismantle'}),openCampaign:()=>campaignUI.open(),openLoja,showLoja:showLoja()});
+  if(showLoja()){
+   const lobby=root.querySelector('#lobby');
+   if(lobby&&!lobby.querySelector('.lobby-loja-shortcut')){
+    const shortcut=J('button',{class:'lobby-loja-shortcut',attrs:{type:'button','aria-label':'Abrir loja'}},J('img',{attrs:{src:new URL('./loja-store-icon.png',import.meta.url).href,alt:''}}),J('span',{text:'LOJA'}));
+    shortcut.onclick=openLoja;lobby.append(shortcut);
+   }
+  }
   function tutorialHome(){campaignUI.close();towerUI?.close();document.getElementById('codex-dialog')?.close();cx();ex();}
   async function tutorialNavigate(target){tutorialHome();const mode=kind=>root.querySelector('.mode-'+kind)?.click();switch(target){case 'lobby':return;case 'summon':root.querySelector('.refuge-summon')?.click();break;case 'weapons':root.querySelector('.chest-btn')?.click();break;case 'heroes':mode('heroes');break;case 'inventory':gearUI?.openBag();break;case 'campaign':await campaignUI.open();break;case 'forges':root.querySelectorAll('#lobby .shortcuts .shortcut')[4]?.click();break;case 'assistant':root.querySelectorAll('#lobby .shortcuts .shortcut')[5]?.click();break;case 'fusion':mode('fusion');break;case 'upgrade':gearUI?.openUpgrade();break;case 'dismantle':gearUI?.openBag({mode:'dismantle'});break;case 'codex':document.getElementById('codex-launcher')?.click();break;case 'tower':await towerUI?.open();break;case 'market':mode('market');break;case 'ranking':festivalUI?.open();break;case 'chest':root.querySelector('.chest-btn')?.click();break;case 'settings':root.querySelector('.topbar-right .top-btn:last-child')?.click();break;}}
   tutorialUI=installTutorial({getCurrent:()=>current,perform:mutate,navigate:tutorialNavigate,returnHome:tutorialHome});

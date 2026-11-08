@@ -9,11 +9,13 @@ const marketRules=require('./market-rules.cjs');
 const MILLION=1e6;
 const bs58=require('./bs58.cjs');
 const {createAuth}=require('./solana-auth.cjs');
+const {createLojaService}=require('./loja-service.cjs');
 function service(options={}){
  const dir=options.dir??path.join(__dirname,'dados-compartilhados');fs.mkdirSync(dir,{recursive:true});
  const file=path.join(dir,'jogadores.json');
  const store=require('./shared-store.cjs').sharedStore(dir),clock=options.now??Date.now;let db=store.load(),festival,handling=false;
  const walletAuth=createAuth({now:clock});
+ const loja=createLojaService({now:clock,config:options.lojaConfig,fetch:options.fetch,getTransaction:options.getTransaction});
  function migrateDb(){db.authVersion??=1;return db.authVersion<2;}
  db.inviteCode??=crypto.randomBytes(6).toString('hex');
  const runtime=new Map(),attempts=new Map(),presence=new Map(),ticketAttempts=new Map(),chatRetentionMs=30*60*1000,notices=[],noticeSeen=new Map(),noticeTtlMs=10*60*1000;
@@ -146,7 +148,7 @@ function service(options={}){
  }
  function isAdmin(user){return !!user?.canImport&&user.name?.toLocaleLowerCase()==='admin';}
  function ticketAdmin(user){return isAdmin(user);}
- function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true},equipment:equipment.view(e.player),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
+ function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true,loja:true},equipment:equipment.view(e.player),loja:loja.publicView(user),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
  function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now()&&s.userId!==user.id);db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
  async function handleRequest(req,res,url){
   if(!url.pathname.startsWith('/shared-api/'))return false;
@@ -394,6 +396,21 @@ function service(options={}){
     else if(route==='tower/pause'&&req.method==='POST')value=tower.pause(user);
     else {result(res,405,{error:'Ação inválida.'});return true;}
     persist();result(res,200,value);return true;
+   }
+   if(route==='loja/config'&&req.method==='GET'){result(res,200,loja.publicView(user));return true;}
+   if(route==='loja/pedido'&&req.method==='POST'){
+    const product=typeof data.product==='string'?data.product:'';
+    const paymentMint=typeof data.paymentMint==='string'?data.paymentMint.trim():'';
+    const quantity=Number.isInteger(data.quantity)?data.quantity:1;
+    const created=loja.createOrder(db,user,{product,quantity,paymentMint});
+    persist();result(res,200,{...payload(user),lojaOrder:created});return true;
+   }
+   if(route==='loja/confirmar'&&req.method==='POST'){
+    const orderId=typeof data.orderId==='string'?data.orderId:'';
+    const signature=typeof data.signature==='string'?data.signature.trim():'';
+    const outcome=await loja.confirmOrder(db,user,actor(user),{orderId,signature});
+    festival.updatePower(user,clock());
+    persist();result(res,200,{...payload(user),lojaResult:outcome});return true;
    }
    if(route==='session'||route==='state'){const p=payload(user);persist();result(res,200,p);return true;}
    if(route==='leaderboard'){
