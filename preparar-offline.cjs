@@ -165,7 +165,7 @@ require('./otimizar-assets.cjs').optimizeAssets(path.join(__dirname,'minihero-of
 for(const file of [root+'/build/app-0-_Askj9.js',root+'/shared-build/app-0-_Askj9.js'])require('./ofuscar-cliente.cjs').obfuscateFile(path.join(__dirname,file));
 const shipped=fs.readFileSync(root+'/shared-build/app-0-_Askj9.js','utf8');
 if(!shipped.includes('hud-loja')||!shipped.includes('LOJA DOS ETERNOS')||!shipped.includes('loja-saco.png')||shipped.includes('hudAllowed'))throw Error('A ofuscação do shared-build removeu o botão LOJA.');
-if(!shipped.includes('38/27')||!shipped.includes('76/27'))throw Error('A ofuscação removeu a escala do espadachim.');
+if(!shipped.includes('swordsman`?9/8')||!shipped.includes('2*9/8')||!shipped.includes('4*9/8')||shipped.includes('38/27')||shipped.includes('76/27'))throw Error('A ofuscação ficou com a escala antiga do espadachim.');
 if(!shipped.includes('/shared-api/loja/rpc')||shipped.includes('order.rpc')||shipped.includes('api.mainnet-beta.solana.com'))throw Error('O cliente da loja ainda chama o RPC da Solana direto.');
 const page=fs.readFileSync(root+'/compartilhado.html','utf8');
 if(!page.includes('./shared-build/app-0-_Askj9.js')||!page.includes('/shared-build/loja.css'))throw Error('compartilhado.html não aponta para o shared-build da loja.');
