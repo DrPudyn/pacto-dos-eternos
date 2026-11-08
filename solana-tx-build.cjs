@@ -64,8 +64,9 @@ function compileTransaction({feePayer,recentBlockhash,instructions}){
    ix.data,
   ]),
  ]);
- const sig=Buffer.alloc(64);
- return Buffer.concat([encodeCompactU16(1),sig,message]);
+ const signatures=header.numRequiredSignatures;
+ const sig=Buffer.alloc(signatures*64);
+ return Buffer.concat([encodeCompactU16(signatures),sig,message]);
 }
 function createAtaIdempotentIx(payer,owner,mint,ata){
  return {programId:PROGRAMS.ASSOCIATED_TOKEN_PROGRAM_ID,data:Buffer.from([1]),accounts:[

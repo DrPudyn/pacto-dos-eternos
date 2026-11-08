@@ -14,7 +14,7 @@ function installLoja({root,getCurrent,perform,getWallet}){
   const soon=loja.soon||!loja.enabled;
   dx({title:'LOJA DOS ETERNOS',className:'loja-dialog eternal-menu',fixed:true},body=>{
    panel=body;body.classList.add('loja-body');
-   const intro=J('p',{class:'loja-intro',text:soon?'A loja abre assim que a carteira recebedora estiver configurada.':'O mercador do Refúgio guarda selos e armas. O pagamento sai da carteira em USDC ou USDT.'});
+   const intro=J('p',{class:'loja-intro',text:soon?'A loja abre assim que a carteira recebedora estiver configurada.':'O mercador do Refúgio guarda selos e armas. O pagamento sai da carteira em USDC.'});
    const balance=J('div',{class:'loja-balances'},J('p',{class:'loja-balance-line',text:'Inventário'}),J('ul',{class:'loja-balance-list'}));
    const message=J('p',{class:'loja-message',attrs:{role:'status'}});
    const grid=J('div',{class:'loja-ledger'});
@@ -73,7 +73,7 @@ function installLoja({root,getCurrent,perform,getWallet}){
     const units=fixed?1:qty;
     const usd=item.priceUsd*units;
     const token=mhLojaToken(Math.round(usd*1_000_000),loja.decimals??6);
-    total.textContent=`Total: ${mhLojaUsd(usd)} · paga ${token} USDC ou USDT`;
+    total.textContent=`Total: ${mhLojaUsd(usd)} · paga ${token} USDC`;
     const blocked=busy||soon||(selected==='welcome'&&!item.available);
     for(const btn of payRow.querySelectorAll('.loja-pay'))btn.disabled=blocked;
    }

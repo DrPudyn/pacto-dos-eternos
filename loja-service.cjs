@@ -52,21 +52,25 @@ function createLojaService(options={}){
   if(!meta)throw Error('Produto inválido.');
   if(!user.walletAddress)throw Error('Conecte sua carteira Solana para comprar na loja.');
   if(product==='welcome')assertWelcomeAvailable(user);
-  const mintOk=Object.values(config.mints).includes(paymentMint)||config.paymentOptions.some(p=>p.mint===paymentMint);
-  if(!mintOk)throw Error('Token de pagamento inválido.');
+  if(paymentMint!==config.mints.usdc)throw Error('A loja aceita apenas USDC.');
   const qty=meta.fixedQuantity??quantity;
   const micro=amountMicro(product,qty,config);
+  const at=now();
+  const open=db.lojaOrders.find(o=>o.userId===user.id&&o.status==='pending'&&o.product===product&&o.quantity===qty&&o.paymentMint===paymentMint&&o.amountMicro===micro&&o.expiresAt>at);
+  if(open)return presentOrder(open,meta,config);
   const referenceKeypair=crypto.generateKeyPairSync('ed25519');
   const referenceBytes=referenceKeypair.publicKey.export({type:'spki',format:'der'}).subarray(-32);
   const reference=bs58.encode(referenceBytes);
   const id=crypto.randomUUID();
-  const at=now();
   const destinationAta=associatedTokenAddress(config.receiver,paymentMint);
   const sourceAta=associatedTokenAddress(user.walletAddress,paymentMint);
   const order={id,userId:user.id,product,quantity:qty,paymentMint,amountMicro:micro,reference,destinationAta,sourceAta,payer:user.walletAddress,payerAta:sourceAta,status:'pending',signature:null,createdAt:at,expiresAt:at+config.orderTtlMs};
   db.lojaOrders.push(order);
-  const amountUsd=meta.priceUsd*(meta.fixedQuantity??qty);
-  return {orderId:id,reference,amountMicro:micro,amountUsd,quantity:qty,product,productLabel:meta.label,paymentMint,receiver:config.receiver,destinationAta,sourceAta,decimals:config.decimals,expiresAt:order.expiresAt,cluster:config.cluster,rpc:config.rpc};
+  return presentOrder(order,meta,config);
+ }
+ function presentOrder(order,meta,config){
+  const amountUsd=meta.priceUsd*(meta.fixedQuantity??order.quantity);
+  return {orderId:order.id,reference:order.reference,amountMicro:order.amountMicro,amountUsd,quantity:order.quantity,product:order.product,productLabel:meta.label,paymentMint:order.paymentMint,receiver:config.receiver,destinationAta:order.destinationAta,sourceAta:order.sourceAta,decimals:config.decimals,expiresAt:order.expiresAt,cluster:config.cluster,rpc:config.rpc};
  }
  async function fulfill(db,user,engine,order){
   const product=config.products[order.product];
@@ -91,19 +95,28 @@ function createLojaService(options={}){
   }
   throw Error('Produto não configurado.');
  }
- async function confirmOrder(db,user,engine,{orderId,signature}){
+ let confirmChain=Promise.resolve();
+ function confirmOrder(db,user,engine,input){
+  const run=confirmChain.then(()=>confirmOrderNow(db,user,engine,input));
+  confirmChain=run.then(()=>{},()=>{});
+  return run;
+ }
+ async function confirmOrderNow(db,user,engine,{orderId,signature}){
   ensureDb(db);
   pruneOrders(db);
   if(!config.enabled)throw Error('Loja indisponível.');
   if(typeof signature!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(signature))throw Error('Assinatura da transação inválida.');
-  if(db.lojaUsedSignatures.includes(signature))throw Error('Esta transação já foi usada em outro pedido.');
   const order=db.lojaOrders.find(o=>o.id===orderId&&o.userId===user.id);
   if(!order)throw Error('Pedido não encontrado.');
   if(order.status==='completed'&&order.signature===signature)return {already:true,order,granted:order.grantSnapshot};
+  if(db.lojaUsedSignatures.includes(signature))throw Error('Esta transação já foi usada em outro pedido.');
   if(order.status!=='pending')throw Error('Pedido já encerrado.');
   if(order.expiresAt<=now()){order.status='expired';throw Error('Pedido expirado. Crie um novo pedido.');}
+  if(order.paymentMint!==config.mints.usdc)throw Error('A loja aceita apenas USDC.');
   if(order.product==='welcome')assertWelcomeAvailable(user);
-  const tx=await getTx(config.rpc,signature);
+  let tx;
+  try{tx=await getTx(config.rpc,signature);}
+  catch{throw Error('A rede Solana não respondeu. Nenhum item foi entregue; o pedido continua aberto.');}
   const check=verifyPayment(tx,{reference:order.reference,mint:order.paymentMint,amountMicro:order.amountMicro,decimals:config.decimals,destinationAta:order.destinationAta,payer:order.payer,payerAta:order.payerAta||order.sourceAta});
   if(!check.ok)throw Error(check.reason);
   const granted=await fulfill(db,user,engine,order);

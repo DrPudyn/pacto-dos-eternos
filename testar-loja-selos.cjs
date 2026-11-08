@@ -54,9 +54,35 @@ server.listen(0,'127.0.0.1',async()=>{
   const sig1=fakeSig();
   txMocks.set(sig1,mockTx({reference:order.reference,mint:order.paymentMint,amount:String(order.amountMicro),destination:order.destinationAta,authority:user.walletAddress}));
   const done=await unit.confirmOrder(db,user,engine,{orderId:order.orderId,signature:sig1});
+  assert.equal(done.already,false);
   assert.equal(done.granted.quantity,2);
   assert.equal(engine.player.mintCards,17);
-  await assert.rejects(()=>unit.confirmOrder(db,user,engine,{orderId:order.orderId,signature:sig1}),/já foi usada/);
+  assert.equal(order.receiver,receiver);
+  const replay=await unit.confirmOrder(db,user,engine,{orderId:order.orderId,signature:sig1});
+  assert.equal(replay.already,true);
+  assert.equal(engine.player.mintCards,17);
+  const [first,second]=await Promise.all([
+   unit.confirmOrder(db,user,engine,{orderId:order.orderId,signature:sig1}),
+   unit.confirmOrder(db,user,engine,{orderId:order.orderId,signature:sig1}),
+  ]);
+  assert.equal(first.already&&second.already,true);
+  assert.equal(engine.player.mintCards,17);
+  const other=unit.createOrder(db,user,{product:'weapon',quantity:1,paymentMint:lojaConfig.mints.usdc});
+  const weaponsBefore=engine.player.weaponSummons;
+  await assert.rejects(()=>unit.confirmOrder(db,user,engine,{orderId:other.orderId,signature:sig1}),/já foi usada/);
+  assert.equal(engine.player.weaponSummons,weaponsBefore);
+  assert.equal(db.lojaOrders.find(o=>o.id===other.orderId).status,'pending');
+  const again=unit.createOrder(db,user,{product:'weapon',quantity:1,paymentMint:lojaConfig.mints.usdc});
+  assert.equal(again.orderId,other.orderId);
+  assert.equal(db.lojaOrders.filter(o=>o.product==='weapon'&&o.status==='pending').length,1);
+  assert.throws(()=>unit.createOrder(db,user,{product:'character',quantity:1,paymentMint:'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'}),/apenas USDC/);
+  assert.deepEqual(unit.publicView(user).paymentOptions.map(p=>p.id),['usdc']);
+  const offline=createLojaService({config:lojaConfig,getTransaction:async()=>{throw Error('fetch failed');}});
+  const cards=engine.player.mintCards;
+  const pending=offline.createOrder(db,user,{product:'character',quantity:1,paymentMint:lojaConfig.mints.usdc});
+  await assert.rejects(()=>offline.confirmOrder(db,user,engine,{orderId:pending.orderId,signature:fakeSig()}),/não respondeu/);
+  assert.equal(engine.player.mintCards,cards);
+  assert.equal(db.lojaOrders.find(o=>o.id===pending.orderId).status,'pending');
 
   const welcome=unit.createOrder(db,user,{product:'welcome',quantity:1,paymentMint:lojaConfig.mints.usdc});
   assert.equal(welcome.amountMicro,9_560_000);
@@ -77,6 +103,21 @@ server.listen(0,'127.0.0.1',async()=>{
   assert.equal(pedido.status,200);
   assert.ok(pedido.value.lojaOrder?.orderId);
 
-  console.log('OK: preços, verificação simulada, selos, pacote de boas-vindas (15+15) e limite por conta.');
+  const dup=await Promise.all([
+   call('loja/pedido',{product:'weapon',quantity:3,paymentMint:lojaConfig.mints.usdc},cookie),
+   call('loja/pedido',{product:'weapon',quantity:3,paymentMint:lojaConfig.mints.usdc},cookie),
+  ]);
+  assert.equal(dup[0].status,200);
+  assert.equal(dup[1].status,200);
+  assert.equal(dup[0].value.lojaOrder.orderId,dup[1].value.lojaOrder.orderId);
+  assert.equal(dup[0].value.lojaOrder.amountMicro,750_000);
+  assert.equal(dup[0].value.lojaOrder.receiver,receiver);
+  assert.equal(dup[0].value.loja.paymentOptions.length,1);
+  assert.equal(dup[0].value.loja.paymentOptions[0].id,'usdc');
+  const usdt=await call('loja/pedido',{product:'weapon',quantity:1,paymentMint:'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'},cookie);
+  assert.equal(usdt.status,400);
+  assert.match(usdt.value.error,/USDC/);
+
+  console.log('OK: preços, só USDC, idempotência da assinatura, pedido único, RPC fora e pacote de boas-vindas.');
  }catch(e){console.error(e);process.exitCode=1;}finally{server.close();try{app.close();}catch{}}
 });
