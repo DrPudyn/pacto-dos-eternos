@@ -12,20 +12,24 @@ const {createAuth,isWalletAddress}=require('./solana-auth.cjs');
 function isPlayerNick(name){return typeof name==='string'&&/^[\p{L}\p{N} _-]{2,20}$/u.test(name)&&!isWalletAddress(name);}
 function accountNeedsNick(user){return !isPlayerNick(user?.name)||(!!user?.walletAddress&&user.name===user.walletAddress);}
 const {createLojaService}=require('./loja-service.cjs');
+const {createBazarUsdcService}=require('./bazar-usdc-service.cjs');
 function service(options={}){
  const dir=options.dir??path.join(__dirname,'dados-compartilhados');fs.mkdirSync(dir,{recursive:true});
  const file=path.join(dir,'jogadores.json');
  const store=require('./shared-store.cjs').sharedStore(dir),clock=options.now??Date.now;let db=store.load(),festival,handling=false;
  const walletAuth=createAuth({now:clock});
  const loja=createLojaService({now:clock,config:options.lojaConfig,fetch:options.fetch,getTransaction:options.getTransaction});
+ const bazar=createBazarUsdcService({now:clock,config:options.bazarConfig,fetch:options.fetch,getTransaction:options.getTransaction,lojaReceiver:loja.config?.receiver??null});
  function migrateDb(){db.authVersion??=1;return db.authVersion<2;}
  db.inviteCode??=crypto.randomBytes(6).toString('hex');
  const runtime=new Map(),attempts=new Map(),presence=new Map(),ticketAttempts=new Map(),chatRetentionMs=30*60*1000,notices=[],noticeSeen=new Map(),noticeTtlMs=10*60*1000;
  db.tickets??=[];
+ db.bazarUsdcListings??=[];db.bazarUsdcOrders??=[];db.bazarUsdcSignatures??=[];
  db.chatMessages??=[];const chatEpoch=crypto.randomUUID();let chatSequence=Math.max(0,...db.chatMessages.map(m=>m.id??0));
  function onlineSnapshot(user){const at=clock();presence.set(user.id,at);for(const [id,seen]of presence)if(at-seen>=300000)presence.delete(id);return {onlineCount:presence.size,online:db.users.filter(u=>presence.has(u.id)).map(u=>u.name),presenceAt:at};}
  const tower=require('./tower-service.cjs').towerService({onExperience:(user,gains)=>actor(user).awardSkillXp(gains),onCombat:(user,event)=>festival.combat(user,event),onFloor:(user,event)=>festival.tower(user,event)});
- function power(user){const heroes=runtime.get(user.id)?.engine.player.heroes??user.state?.player?.heroes??[];return [...heroes,...db.listings.filter(l=>l.seller===user.id&&l.hero&&l.source!=='caravan').map(l=>l.hero)].reduce((n,h)=>n+([1,3,10,35,120,400][h.rarity]??0),0);}
+ function escrowHeroes(user){return [...db.listings.filter(l=>l.seller===user.id&&l.hero&&l.source!=='caravan'),...(db.bazarUsdcListings??[]).filter(l=>l.sellerId===user.id&&l.hero&&(l.status==='open'||l.status==='reserved'))].map(l=>l.hero);}
+ function power(user){const heroes=runtime.get(user.id)?.engine.player.heroes??user.state?.player?.heroes??[];return [...heroes,...escrowHeroes(user)].reduce((n,h)=>n+([1,3,10,35,120,400][h.rarity]??0),0);}
  function initFestival(){return require('./festival-service.cjs').festivalService(db,{now:clock,power,balance:u=>runtime.get(u.id)?.engine.balance??u.state?.balance??0,credit:(u,coins)=>{const e=runtime.get(u.id)?.engine;if(e)e.balance+=coins*MILLION;else u.state.balance+=coins*MILLION;}});}
  festival=initFestival();
  const campaign=require('./campaign-service.cjs').campaignService({actor,onBoss:(user,event)=>festival.combat(user,event),now:clock});
@@ -33,7 +37,7 @@ function service(options={}){
  function persist(){for(const [id,r]of runtime){const user=db.users.find(u=>u.id===id);if(user){codex.discover(user,r.engine.player.heroes);weaponCodex.discover(user,r.engine.player.equipment?.weapons);user.state=r.export();}}try{store.save(db);}catch(error){runtime.clear();tower.reset();campaign.reset();db=store.load();festival=initFestival();throw Error('A operação não pôde ser confirmada. Nenhum pagamento parcial foi mantido.');}}
  function pruneChat(at=clock()){const previous=db.chatMessages.length;db.chatMessages=db.chatMessages.filter(m=>Number.isFinite(m.at)&&m.at>=at-chatRetentionMs);return db.chatMessages.length!==previous;}
  if(pruneChat())persist();
- function actor(user){let r=runtime.get(user.id);if(!r){if(user.state){const stats=user.state.stats??={};for(const [key,rarity]of [['legendary',4],['mythic',5]])if(stats[key]===undefined)stats[key]=user.state.player.heroes.filter(h=>h.rarity===rarity).length+db.listings.filter(l=>l.seller===user.id&&l.source!=='caravan'&&l.hero?.rarity===rarity).length;}r=createEngine(user.state??require('./starter-state.cjs').starterState(),{codexBonuses:codex.bonuses(user),cleared:()=>user.campaign?.cleared,onCombat:event=>{festival.combat(user,event);if(event.farmMob)require('./creature-codex.cjs').discover(user,event.farmMob.region,event.farmMob.variant);}});runtime.set(user.id,r);}weaponCodex.discover(user,r.engine.player.equipment?.weapons);festival.join(user,clock());codex.discover(user,r.engine.player.heroes);codex.discover(user,db.listings.filter(l=>l.seller===user.id&&l.hero&&l.source!=='caravan').map(l=>l.hero));r.engine.player.campaignFarmMultiplier=require('./campaign-config.cjs').farmMultiplier(user.campaign?.cleared);r.engine.player.creatureFarmGoldBonus=require('./creature-codex.cjs').bonuses(user).gold;r.tick();return r.engine;}
+ function actor(user){let r=runtime.get(user.id);if(!r){if(user.state){const stats=user.state.stats??={};for(const [key,rarity]of [['legendary',4],['mythic',5]])if(stats[key]===undefined)stats[key]=user.state.player.heroes.filter(h=>h.rarity===rarity).length+db.listings.filter(l=>l.seller===user.id&&l.source!=='caravan'&&l.hero?.rarity===rarity).length+(db.bazarUsdcListings??[]).filter(l=>l.sellerId===user.id&&(l.status==='open'||l.status==='reserved')&&l.hero?.rarity===rarity).length;}r=createEngine(user.state??require('./starter-state.cjs').starterState(),{codexBonuses:codex.bonuses(user),cleared:()=>user.campaign?.cleared,onCombat:event=>{festival.combat(user,event);if(event.farmMob)require('./creature-codex.cjs').discover(user,event.farmMob.region,event.farmMob.variant);}});runtime.set(user.id,r);}weaponCodex.discover(user,r.engine.player.equipment?.weapons);festival.join(user,clock());codex.discover(user,r.engine.player.heroes);codex.discover(user,db.listings.filter(l=>l.seller===user.id&&l.hero&&l.source!=='caravan').map(l=>l.hero));r.engine.player.campaignFarmMultiplier=require('./campaign-config.cjs').farmMultiplier(user.campaign?.cleared);r.engine.player.creatureFarmGoldBonus=require('./creature-codex.cjs').bonuses(user).gold;r.tick();return r.engine;}
  const botProfiles=[{key:'arena-bot-1',name:'IA Arashi'},{key:'arena-bot-2',name:'IA Fênix'},{key:'arena-bot-3',name:'IA Lobo'}];
  function ensureBots(){for(const profile of botProfiles){const existing=db.users.find(u=>u.botKey===profile.key);let name=profile.name,suffix=2;while(db.users.some(u=>u!==existing&&u.name.toLocaleLowerCase()===name.toLocaleLowerCase()))name=profile.name+' '+suffix++;if(existing){existing.name=name;existing.isBot=true;existing.canImport=false;existing.isTicketAdmin=false;existing.imported=true;continue;}db.users.push({id:crypto.randomUUID(),name,botKey:profile.key,isBot:true,canImport:false,isTicketAdmin:false,imported:true,state:require('./starter-state.cjs').starterState(),tutorial:require('./tutorial-rules.cjs').create()});}}
  function botAction(engine,route,args){try{const pending=engine.action(route,args);if(pending&&typeof pending.catch==='function')pending.catch(error=>console.error('Falha na ação de bot:',error.message));}catch(error){console.error('Falha na ação de bot:',error.message);}}
@@ -150,7 +154,7 @@ function service(options={}){
  }
  function isAdmin(user){return !!user?.canImport&&user.name?.toLocaleLowerCase()==='admin';}
  function ticketAdmin(user){return isAdmin(user);}
- function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,needsNick:accountNeedsNick(user),walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true,loja:true},equipment:equipment.view(e.player),loja:loja.publicView(user),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
+ function payload(user,minted=[]){const online=onlineSnapshot(user);const e=actor(user);const packet=e.packet(minted);packet.seq=user.packetSequence=Math.max(Date.now(),(user.packetSequence??0)+1);packet.market.open=true;const admin=isAdmin(user);return {tutorial:require('./tutorial-rules.cjs').view(user),farmMobPool:require('./monster-visuals.cjs').farmMobPool(user.campaign?.cleared),name:user.name,needsNick:accountNeedsNick(user),walletAddress:user.walletAddress??null,notices:publicNotices(user),...online,balance:e.balance,isOwner:admin,canReviewTickets:admin,features:{tower:true,codex:true,festival:true,equipment:true,loja:true,bazarUsdc:bazar.config.enabled},equipment:equipment.view(e.player),loja:loja.publicView(user),bazarUsdc:bazar.publicConfig(),powerTotal:power(user),rankingAvatar:user.rankingAvatar??require('./festival-service.cjs').AVATAR_DEFAULT,codex:{...codex.view(user),creatures:require('./creature-codex.cjs').view(user),weapons:weaponCodex.view(user),forge:e.forgeView()},canImport:admin&&!user.imported,packet,stats:{...e.stats,kills:e.live.battle.kills,bosses:e.live.battle.bossesKilled}};}
  function issue(user,req){const token=crypto.randomBytes(32).toString('hex');db.sessions=db.sessions.filter(s=>s.expires>Date.now()&&s.userId!==user.id);db.sessions.push({hash:crypto.createHash('sha256').update(token).digest('hex'),userId:user.id,expires:Date.now()+30*86400000});persist();const secure=req.headers['x-forwarded-proto']==='https';return {'Set-Cookie':`mh_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure?'; Secure':''}`};}
  async function handleRequest(req,res,url){
   if(!url.pathname.startsWith('/shared-api/'))return false;
@@ -274,6 +278,12 @@ function service(options={}){
     const out=await loja.proxyRpc(data);
     result(res,out.status,out.body);return true;
    }
+   if(route==='bazar-usdc/rpc'){
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    if(tooMany('bazar-rpc:'+user.id,20,10000)){result(res,429,{error:'Muitas consultas à rede Solana. Espere alguns segundos.'});return true;}
+    const out=await bazar.proxyRpc(data);
+    result(res,out.status,out.body);return true;
+   }
    if(route==='profile/nick'){
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
     const name=typeof data.name==='string'?data.name.trim():'';
@@ -341,7 +351,7 @@ function service(options={}){
     else throw Error('Ação da campanha inválida.');
     persist();result(res,200,value);return true;
    }
-   if(campaign.active(user)&&((route==='action')||route==='market/list'||route==='market/list-weapon'||route==='market/buy'||route==='market/cancel'||route==='tower/start'||route==='skills/upgrade'||route==='purchase'&&data.product==='fusion'||route.startsWith('equipment/')&&req.method==='POST'))throw Error('Finalize a expedição para alterar o time, skills ou equipamentos.');
+   if(campaign.active(user)&&((route==='action')||route==='market/list'||route==='market/list-weapon'||route==='market/buy'||route==='market/cancel'||route==='tower/start'||route==='skills/upgrade'||route==='purchase'&&data.product==='fusion'||route.startsWith('equipment/')&&req.method==='POST'||req.method==='POST'&&route.startsWith('bazar-usdc/')))throw Error('Finalize a expedição para alterar o time, skills ou equipamentos.');
    if(route.startsWith('equipment/')){
     if(route==='equipment/state'&&req.method==='GET'){persist();result(res,200,payload(user));return true;}
     if(req.method!=='POST'||!['equipment/open','equipment/redeem','equipment/upgrade','equipment/equip','equipment/unequip','equipment/favorite','equipment/dismantle'].includes(route))throw Error('Ação de equipamento inválida.');
@@ -457,6 +467,19 @@ function service(options={}){
     persist();result(res,200,{...payload(user),credit:{recipient:recipient.name,coins:data.coins,balance:target.balance/MILLION}});return true;
    }
    if(route==='market'&&req.method==='GET'){result(res,200,{listings:db.listings.map(l=>({...publicListing(l),mine:l.seller===user.id}))});return true;}
+   if(route==='bazar-usdc'&&req.method==='GET'){result(res,200,await bazar.view(db,user,id=>db.users.find(u=>u.id===id)?.name??'Jogador'));return true;}
+   function bazarBusy(){if(user.tower?.status==='active')throw Error('Encerre a Torre antes de negociar no bazar em USDC.');}
+   if(route==='bazar-usdc/cotar'&&req.method==='POST'){result(res,200,{quote:bazar.quote(data.priceUsdc)});return true;}
+   if(route==='bazar-usdc/anunciar'&&req.method==='POST'){bazarBusy();const listed=await bazar.list(db,user,engine,{kind:data.kind,heroId:data.heroId,weaponId:data.weaponId,priceUsdc:data.priceUsdc});festival.updatePower(user,clock());persist();result(res,200,{...payload(user),bazarListing:listed});return true;}
+   if(route==='bazar-usdc/cancelar'&&req.method==='POST'){bazarBusy();await bazar.cancel(db,user,engine,data.id);festival.updatePower(user,clock());persist();result(res,200,payload(user));return true;}
+   if(route==='bazar-usdc/reservar'&&req.method==='POST'){bazarBusy();const order=await bazar.reserve(db,user,engine,data.id);persist();result(res,200,{...payload(user),bazarOrder:order});return true;}
+   if(route==='bazar-usdc/confirmar'&&req.method==='POST'){
+    bazarBusy();
+    const outcome=await bazar.confirm(db,user,engine,{orderId:typeof data.orderId==='string'?data.orderId:'',signature:typeof data.signature==='string'?data.signature.trim():''});
+    if(outcome.persist){engine.syncEquipment?.();festival.updatePower(user,clock());const sellerUser=db.users.find(u=>u.id===outcome.sellerId);if(sellerUser)festival.updatePower(sellerUser,clock());persist();}
+    if(!outcome.ok){result(res,409,{error:outcome.error});return true;}
+    result(res,200,{...payload(user),bazarResult:outcome});return true;
+   }
    if(req.method!=='POST'){result(res,405,{});return true;}
    if(route==='import'){
     if(!isAdmin(user)||user.imported||db.listings.some(l=>l.seller===user.id)){result(res,403,{error:'Importação disponível apenas uma vez para a conta ADMIN.'});return true;}

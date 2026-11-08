@@ -112,12 +112,12 @@ function mhSolanaTransferCheckedIx(source,mint,destination,owner,amountMicro,dec
  ]};
 }
 const MH_SOLANA_RPC_FAIL='A rede Solana não respondeu. Tente novamente em instantes.';
-async function mhSolanaRpc(method,params){
+async function mhSolanaRpc(method,params,path){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),20000);
  let res,body;
  try{
-  res=await fetch('/shared-api/loja/rpc',{method:'POST',credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+  res=await fetch(path||'/shared-api/loja/rpc',{method:'POST',credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
   body=await res.json();
  }catch{throw Error(MH_SOLANA_RPC_FAIL);}
  finally{clearTimeout(timeout);}
@@ -143,4 +143,28 @@ async function mhSolanaBuildLojaTx(order,payer){
    mhSolanaTransferCheckedIx(sourceAta,order.paymentMint,order.destinationAta,payer,order.amountMicro,order.decimals,[order.reference]),
   ],
  });
+}
+async function mhSolanaBuildBazarTx(order,payer){
+ const block=await mhSolanaRpc('getLatestBlockhash',[{commitment:'finalized'}],'/shared-api/bazar-usdc/rpc');
+ const blockhash=block?.value?.blockhash;
+ if(!blockhash)throw Error('Não foi possível obter o bloco da Solana. Tente novamente em instantes.');
+ if(!order?.sellerAta||!order?.developerAta||!order?.payerAta||!order?.reference)throw Error('Pedido incompleto. Reserve o anúncio de novo.');
+ if(order.sellerMicro+order.feeMicro!==order.priceMicro)throw Error('A divisão deste pedido não fecha com o preço.');
+ return mhSolanaCompileTx({
+  feePayer:payer,
+  recentBlockhash:blockhash,
+  instructions:[
+   mhSolanaAtaIx(payer,order.sellerWallet,order.mint,order.sellerAta),
+   mhSolanaAtaIx(payer,order.developerWallet,order.mint,order.developerAta),
+   mhSolanaTransferCheckedIx(order.payerAta,order.mint,order.sellerAta,payer,order.sellerMicro,order.decimals,[order.reference]),
+   mhSolanaTransferCheckedIx(order.payerAta,order.mint,order.developerAta,payer,order.feeMicro,order.decimals,[order.reference]),
+  ],
+ });
+}
+async function mhSolanaNetworkFee(wire){
+ const message=wire.slice(1+64);
+ let binary='';
+ for(const byte of message)binary+=String.fromCharCode(byte);
+ const result=await mhSolanaRpc('getFeeForMessage',[btoa(binary),{commitment:'confirmed'}],'/shared-api/bazar-usdc/rpc');
+ return Number.isInteger(result?.value)?result.value:null;
 }
