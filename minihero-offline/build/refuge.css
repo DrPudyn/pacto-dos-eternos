@@ -4,13 +4,11 @@
 .refuge-scene{position:relative;max-width:100%;aspect-ratio:16/9;flex:none;isolation:isolate;background:transparent}
 .refuge-clouds{position:absolute;inset:0 -5%;pointer-events:none;background:url('./refuge-sky.png') center/cover;mask-image:linear-gradient(transparent 52%,#000 82%);animation:refuge-clouds 75s linear infinite alternate}
 .refuge-island,.refuge-effects,.refuge-destinations{position:absolute;inset:0;width:100%;height:100%}
-/* Ilha da loja: porcentagens da cena, no mesmo ritmo da ilha principal. O gerador atualiza as variáveis. */
-.refuge-shop-isle{--shop-left:0.478%;--shop-top:0.744%;--shop-width:22.787%;position:absolute;left:var(--shop-left);top:var(--shop-top);width:var(--shop-width);z-index:4;margin:0;padding:0;border:0;background:none;cursor:pointer;pointer-events:none;animation:refuge-float 9s ease-in-out infinite}
-.refuge-shop-isle.is-locked,.refuge-shop-isle.is-locked .refuge-shop-hit{pointer-events:none;cursor:default}
-.refuge-shop-art{display:block;width:100%;height:auto;image-rendering:pixelated;pointer-events:none}
-.refuge-shop-hit{position:absolute;left:0;top:10%;width:56%;height:84%;pointer-events:auto;background:none;border:0;padding:0;cursor:pointer}
-.refuge-shop-label{position:absolute;left:24%;top:38%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;border:1px solid #cba451;box-shadow:0 2px #060e1e,0 0 0 2px #1f3f58,inset 0 0 0 2px #0b1e33;background:linear-gradient(#172e45ee,#08182bef);color:#ffe2a2;padding:4px 10px;font:clamp(12px,1.35vw,20px)/1 'Jersey 10',sans-serif;letter-spacing:.8px;text-shadow:1px 2px #000;white-space:nowrap}
-.refuge-shop-isle:hover .refuge-shop-art,.refuge-shop-isle:focus-visible .refuge-shop-art{filter:drop-shadow(0 0 1px #fff6d2) drop-shadow(0 0 5px #ffd56a) drop-shadow(0 0 12px #ffb020aa)}
+/* A tenda do mercador já está pintada no recorte. O botão só cobre essa pedra. */
+.refuge-shop-isle{position:absolute;left:3.6%;top:38.2%;width:17.2%;height:20.4%;z-index:6;margin:0;padding:0;border:0;background:transparent;cursor:pointer;box-shadow:none}
+.refuge-shop-isle.is-locked{pointer-events:none;cursor:default}
+.refuge-shop-label{position:absolute;left:50%;top:22%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;border:1px solid #cba451;box-shadow:0 2px #060e1e,0 0 0 2px #1f3f58,inset 0 0 0 2px #0b1e33;background:linear-gradient(#172e45ee,#08182bef);color:#ffe2a2;padding:4px 10px;font:clamp(12px,1.35vw,20px)/1 'Jersey 10',sans-serif;letter-spacing:.8px;text-shadow:1px 2px #000;white-space:nowrap}
+.refuge-shop-isle:hover,.refuge-shop-isle:focus-visible{background:radial-gradient(ellipse at 50% 42%,#ffd56a33,transparent 70%)}
 .refuge-shop-isle:hover .refuge-shop-label,.refuge-shop-isle:focus-visible .refuge-shop-label{opacity:1}
 .refuge-shop-isle:focus-visible{outline:none}
 .refuge-island{object-fit:fill;image-rendering:pixelated;pointer-events:none;animation:refuge-float 9s ease-in-out infinite}

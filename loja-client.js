@@ -1,5 +1,5 @@
-function mhLojaUsd(n){return Number(n).toLocaleString('pt-BR',{style:'currency',currency:'USD'});}
-function mhLojaToken(amountMicro,decimals){return (amountMicro/10**decimals).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:6});}
+function mhLojaUsd(n){return 'US$ '+Number(n).toFixed(2);}
+function mhLojaToken(amountMicro,decimals){return (amountMicro/10**decimals).toFixed(2);}
 function installLoja({root,getCurrent,perform,getWallet}){
  let panel=null;
  const arts={
@@ -14,10 +14,10 @@ function installLoja({root,getCurrent,perform,getWallet}){
   const soon=loja.soon||!loja.enabled;
   dx({title:'LOJA DOS ETERNOS',className:'loja-dialog eternal-menu',fixed:true},body=>{
    panel=body;body.classList.add('loja-body');
-   const intro=J('p',{class:'loja-intro',text:soon?'A loja abre assim que a carteira recebedora estiver configurada.':'Selos, armas e o pacote de boas-vindas. Pagamento on-chain em USDC ou USDT.'});
+   const intro=J('p',{class:'loja-intro',text:soon?'A loja abre assim que a carteira recebedora estiver configurada.':'O mercador do Refúgio guarda selos e armas. O pagamento sai da carteira em USDC ou USDT.'});
    const balance=J('div',{class:'loja-balances'},J('p',{class:'loja-balance-line',text:'Inventário'}),J('ul',{class:'loja-balance-list'}));
    const message=J('p',{class:'loja-message',attrs:{role:'status'}});
-   const grid=J('div',{class:'loja-products'});
+   const grid=J('div',{class:'loja-ledger'});
    const qtyBox=J('div',{class:'loja-qty-box'},J('span',{class:'loja-qty-label',text:'Quantidade'}));
    const qtyRow=J('div',{class:'loja-qty',attrs:{role:'group','aria-label':'Quantidade de 1 a 10'}});
    const total=J('p',{class:'loja-total'});
@@ -30,14 +30,17 @@ function installLoja({root,getCurrent,perform,getWallet}){
    let selected=products.character?'character':Object.keys(products)[0],qty=1,busy=false;
    for(const [key,item]of Object.entries(products)){
     const sold=item.id==='welcome'&&!item.available;
-    const card=J('button',{class:'loja-product'+(item.highlight?' loja-product-highlight':'')+(sold?' is-sold':''),attrs:{type:'button','data-product':key,'aria-pressed':String(key===selected)}},
-     ...(item.badge?[J('span',{class:'loja-badge',text:item.badge})]:[]),
-     J('span',{class:'loja-product-art'},J('img',{attrs:{src:arts[key]||arts.character,alt:'',draggable:'false'}})),
-     J('strong',{text:item.label}),
-     J('span',{class:'loja-product-price',text:mhLojaUsd(item.priceUsd)+(item.fixedQuantity?'':' / un.')}),
-     ...(item.subtitle?[J('small',{text:item.subtitle})]:[]),
-     ...(sold?[J('small',{class:'loja-product-sold',text:'Já adquirido nesta conta'})]:[]));
-    card.onclick=()=>{if(busy||sold)return;selected=key;for(const b of grid.querySelectorAll('.loja-product'))b.setAttribute('aria-pressed',String(b.dataset.product===selected));paint();};
+    const card=J('button',{class:'loja-ware'+(item.highlight?' is-bundle':'')+(sold?' is-sold':''),attrs:{type:'button','data-product':key,'aria-pressed':String(key===selected)}},
+     J('span',{class:'loja-ware-art'},J('img',{attrs:{src:arts[key]||arts.character,alt:'',draggable:'false'}})),
+     J('span',{class:'loja-ware-copy'},
+      J('strong',{text:item.label}),
+      ...(item.subtitle?[J('small',{text:item.subtitle})]:[]),
+      ...(sold?[J('small',{class:'loja-ware-sold',text:'Já adquirido nesta conta'})]:[])),
+     J('span',{class:'loja-ware-price'},
+      ...(item.badge?[J('span',{class:'loja-ware-badge',text:item.badge})]:[]),
+      J('b',{text:mhLojaUsd(item.priceUsd)}),
+      J('i',{text:item.fixedQuantity?'o pacto':'cada'})));
+    card.onclick=()=>{if(busy||sold)return;selected=key;for(const b of grid.querySelectorAll('.loja-ware'))b.setAttribute('aria-pressed',String(b.dataset.product===selected));paint();};
     grid.append(card);
    }
    for(let n=1;n<=10;n++){
@@ -70,7 +73,7 @@ function installLoja({root,getCurrent,perform,getWallet}){
     const units=fixed?1:qty;
     const usd=item.priceUsd*units;
     const token=mhLojaToken(Math.round(usd*1_000_000),loja.decimals??6);
-    total.textContent=`Total: ${mhLojaUsd(usd)} · ${token} USDC ou USDT`;
+    total.textContent=`Total: ${mhLojaUsd(usd)} · paga ${token} USDC ou USDT`;
     const blocked=busy||soon||(selected==='welcome'&&!item.available);
     for(const btn of payRow.querySelectorAll('.loja-pay'))btn.disabled=blocked;
    }

@@ -646,6 +646,9 @@ function composite(cut,sky,island){
 }
 
 function main(){
+  // A loja é a tenda pintada no próprio recorte do Refúgio. Este gerador
+  // não recria o recorte antigo, que parecia colado por cima do cenário.
+  return;
   const cut=readPng(path.join(__dirname,'assets/refuge-cutout.png'));
   const sky=readPng(path.join(__dirname,'assets/refuge-sky.png'));
   const painter=createPainter(cut);
