@@ -56,7 +56,7 @@ original=require('./dungeon-themes.cjs').addDungeonThemes(original);
 original=require('./farm-waves.cjs').applyWaveVisuals(original);
 fs.copyFileSync('previas-mapas/vampire-idle.png',root+'/build/vampire-idle.png');
 for(const skin of ['swordsman','spearman','archer','mage'])fs.copyFileSync('assets/codex-'+skin+'-pixel.png',root+'/build/codex-'+skin+'-pixel.png');
-require('./ajustar-escala-arqueiro.cjs').normalizeSheets();
+// Sprites do arqueiro já vêm normalizados em assets/arqueiro/ (sem Python no build).
 const archerSheetHashes={idle:'archer-idle-P3SxISc4.png',walk:'archer-walk-BSlfYEZv.png',attack:'archer-attack-ClxIWz7r.png'};
 for(const [action,file] of Object.entries(archerSheetHashes))fs.copyFileSync('assets/arqueiro/archer-'+action+'.png',root+'/build/'+file);
 fs.writeFileSync(root+'/build/codex.css',fs.readFileSync('codex.css','utf8')+'\n'+fs.readFileSync('forge.css','utf8'));
