@@ -1,4 +1,5 @@
 const fs=require('fs'),path=require('path');
+try{require('./gerar-loja-icone.cjs');}catch(e){console.warn('Ícones da loja:',e.message);}
 const root='minihero-offline';
 const target=root+'/build/app-0-_Askj9.js';
 for(const name of fs.readdirSync(root+'/build').filter(n=>n.endsWith('.css'))){const file=root+'/build/'+name;fs.writeFileSync(file,require('./local-economy-ui.cjs').updateEconomyStyles(fs.readFileSync(file,'utf8')));}
@@ -93,13 +94,16 @@ original=original.replace('e.chest+=r.mhdg-c,','e.chest+=Math.round((r.mhdg-c)*(
 const tutorialClient='var mhTutorialSteps='+JSON.stringify(require('./tutorial-content.cjs'))+';\n'+fs.readFileSync('tutorial-client.js','utf8')+'\n'+fs.readFileSync('farm-waves-client.js','utf8');
 fs.copyFileSync('tutorial.css',root+'/build/tutorial.css');
 fs.copyFileSync('mobile.css',root+'/build/mobile.css');
+const lojaClient=fs.readFileSync('solana-spl-browser.js','utf8')+'\n'+fs.readFileSync('loja-client.js','utf8');
 const skillClient=tutorialClient+'\n'+fs.readFileSync('campaign-atb.js','utf8')+'\n'+fs.readFileSync('campaign-atb-vfx.js','utf8')+'\n'+fs.readFileSync('campaign-atb-client.js','utf8')+'\n'+fs.readFileSync('campaign-tactics.js','utf8')+'\n'+fs.readFileSync('campaign-enemies-client.js','utf8')+'\n'+fs.readFileSync('campaign-defense.js','utf8')+'\n'+fs.readFileSync('hero-rarity-client.js','utf8')+'\n'+fs.readFileSync('screen-transitions.js','utf8')+'\n'+fs.readFileSync('refuge-client.js','utf8')+'\n'+fs.readFileSync('equipment-client.js','utf8')+'\n'+fs.readFileSync('language-client.js','utf8')+'\n'+fs.readFileSync('pact-client.js','utf8')+'\n'+fs.readFileSync('assistant-client.js','utf8')+'\n'+fs.readFileSync('shop-fixed-client.js','utf8')+'\n'+fs.readFileSync('forge-client.js','utf8')+'\n'+fs.readFileSync('skill-client.js','utf8');
+fs.copyFileSync('loja.css',root+'/build/loja.css');
+for(const name of ['loja-store-icon.png','loja-welcome.png'])fs.copyFileSync('assets/'+name,root+'/build/'+name);
 const adapter=skillClient+'\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('offline-adapter.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
 let patched=original.replace('$E(sT);export{Jp as t};',adapter+'\nexport{Jp as t};');
 patched=patched.replace('Paid from your wallet, with a studio fee of ${qo(BigInt(_n(fx)))} SOL.','Pago com saldo local fictício. Sem taxas ou carteira.');
 patched=patched.replaceAll('Paid from your wallet, with a studio fee of ${qo(BigInt(hn))} SOL.','Pago com saldo local fictício.');
 fs.writeFileSync(target,patched);
-const shared=skillClient+'\nvar mhReleaseNotes='+JSON.stringify(require('./release-notes.cjs'))+';\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('solana-wallet-client.js','utf8')+'\n'+fs.readFileSync('campaign-client.js','utf8')+'\n'+fs.readFileSync('shared-adapter.js','utf8').replaceAll('MHDG','Ouro')+'\n'+fs.readFileSync('tower-client.js','utf8')+'\n'+fs.readFileSync('codex-client.js','utf8')+'\n'+fs.readFileSync('festival-client.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
+const shared=skillClient+'\nvar mhReleaseNotes='+JSON.stringify(require('./release-notes.cjs'))+';\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('solana-wallet-client.js','utf8')+'\n'+lojaClient+'\n'+fs.readFileSync('campaign-client.js','utf8')+'\n'+fs.readFileSync('shared-adapter.js','utf8').replaceAll('MHDG','Ouro')+'\n'+fs.readFileSync('tower-client.js','utf8')+'\n'+fs.readFileSync('codex-client.js','utf8')+'\n'+fs.readFileSync('festival-client.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
 require('./assets/arqueiro/desenhar-arqueiro.cjs').draw(path.join(__dirname,'assets/arqueiro'));
 for(const [src,dst] of [['archer-idle.png','archer-idle-P3SxISc4.png'],['archer-walk.png','archer-walk-BSlfYEZv.png'],['archer-attack.png','archer-attack-ClxIWz7r.png']]){
   const from=path.join(__dirname,'assets/arqueiro',src);
@@ -122,7 +126,7 @@ if(!offlineHtml.includes('assistant.css')){offlineHtml=offlineHtml.replace('</he
 if(!offlineHtml.includes('skill-progression.css')){offlineHtml=offlineHtml.replace('</head>','<link rel="stylesheet" href="./build/skill-progression.css"></head>');fs.writeFileSync(root+'/index.html',offlineHtml);}
 if(!offlineHtml.includes('equipment.css')){offlineHtml=offlineHtml.replace('</head>','<link rel="stylesheet" href="./build/equipment.css"></head>');fs.writeFileSync(root+'/index.html',offlineHtml);}
 let html=offlineHtml.replaceAll('./build/','./shared-build/').replace('</head>','<link rel="stylesheet" href="/shared.css"><link rel="stylesheet" href="/shared-build/codex.css"><link rel="stylesheet" href="/shared-build/festival.css"><link rel="stylesheet" href="/shared-build/refuge.css"></head>');
-html=html.replace('</head>','<link rel="stylesheet" href="/shared-build/campaign.css"><link rel="stylesheet" href="/shared-build/tutorial.css"><link rel="stylesheet" href="/shared-build/mobile.css"></head>');
+html=html.replace('</head>','<link rel="stylesheet" href="/shared-build/campaign.css"><link rel="stylesheet" href="/shared-build/tutorial.css"><link rel="stylesheet" href="/shared-build/mobile.css"><link rel="stylesheet" href="/shared-build/loja.css"></head>');
 fs.writeFileSync(root+'/compartilhado.html',html);
 console.log('Adaptador offline instalado.');
 
