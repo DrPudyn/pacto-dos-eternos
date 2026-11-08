@@ -122,6 +122,14 @@ for(const [src,dst] of [['spearman-idle.png','spearman-idle-CJGk46vT.png'],['spe
     fs.copyFileSync(from,path.join(dir,dst));
   }
 }
+require('./assets/espadachim/desenhar-espadachim.cjs').draw(path.join(__dirname,'assets/espadachim'));
+for(const [src,dst] of [['swordsman-idle.png','swordsman-idle-BZoYeDgg.png'],['swordsman-walk.png','swordsman-walk-DMJTpNDL.png'],['swordsman-attack.png','swordsman-attack-dbN_R6X3.png']]){
+  const from=path.join(__dirname,'assets/espadachim',src);
+  for(const dir of [root+'/build',root+'/shared-build']){
+    fs.mkdirSync(dir,{recursive:true});
+    fs.copyFileSync(from,path.join(dir,dst));
+  }
+}
 fs.mkdirSync(root+'/shared-build',{recursive:true});
 for(const file of fs.readdirSync(root+'/build'))if(file!=='shared-app.js')fs.copyFileSync(root+'/build/'+file,root+'/shared-build/'+file);
 fs.writeFileSync(root+'/shared-build/app-0-_Askj9.js',original.replace('$E(sT);export{Jp as t};',shared+'\nexport{Jp as t};'));
