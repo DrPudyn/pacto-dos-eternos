@@ -62,7 +62,7 @@ let mhLanguageObserver,mhLanguageSources=new WeakMap();
 function mhSetLanguage(locale){if(!['pt-BR','en'].includes(locale))return;mhLanguage=locale;try{localStorage.setItem('minihero.language',locale);}catch{}mhLanguageRefresh(document.body);}
 function mhLanguageRefresh(root){
  if(!root)return;mhLanguageObserver?.disconnect();
- const protectedSelector='script,style,textarea,[data-no-translate],.player-name,.shared-toolbar>strong,.festival-place>strong,.festival-standings td:nth-child(2),#owner-player option,#boss-player option';
+ const protectedSelector='script,style,textarea,[data-no-translate],.player-name,.player-wallet,.shared-toolbar>strong,#shared-player-nick,.festival-place>strong,.festival-standings td:nth-child(2),#owner-player option,#boss-player option';
  function update(node,value,set){const old=mhLanguageSources.get(node);const source=old&&value===old.output?old.source:value;const output=mhTranslate(source);if(output!==value)set(output);mhLanguageSources.set(node,{source,output});}
  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
  while((n=walker.nextNode())){if(!n.parentElement||n.parentElement.closest(protectedSelector)||/^[\d\s.,/%+:#−-]+$/.test(n.nodeValue))continue;update(n,n.nodeValue,v=>n.nodeValue=v);}

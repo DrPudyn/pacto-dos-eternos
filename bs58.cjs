@@ -15,7 +15,8 @@ function decode(string){
   }
   while(carry){bytes.push(carry&255);carry>>=8;}
  }
- for(let i=0;i<string.length&&string[i]==='1';i++)bytes.push(0);
+ // O zero inicial do acumulador já representa um '1'. Os demais '1' são bytes zero à esquerda.
+ for(let i=0;i<string.length-1&&string[i]==='1';i++)bytes.push(0);
  return Buffer.from(bytes.reverse());
 }
 function encode(buffer){
@@ -31,7 +32,8 @@ function encode(buffer){
   }
   while(carry){digits.push(carry%58);carry=(carry/58)|0;}
  }
- for(let i=0;i<source.length&&source[i]===0;i++)digits.push(0);
+ // O dígito zero do acumulador já vira um '1'. Cada byte zero anterior a ele entra à parte.
+ for(let i=0;i<source.length-1&&source[i]===0;i++)digits.push(0);
  return digits.reverse().map(d=>ALPHABET[d]).join('');
 }
 module.exports={decode,encode};

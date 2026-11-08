@@ -1,4 +1,5 @@
-const MH_SOLANA_PROGRAMS={TOKEN_PROGRAM_ID:'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',ASSOCIATED_TOKEN_PROGRAM_ID:'ATokenGPvbdGVxr1b2dvdzs13Ldd6YcMNNbJp6YNn8p',SYSTEM_PROGRAM_ID:'11111111111111111111111111111111'};
+const MH_SOLANA_PROGRAMS={TOKEN_PROGRAM_ID:'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',ASSOCIATED_TOKEN_PROGRAM_ID:'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',SYSTEM_PROGRAM_ID:'11111111111111111111111111111111'};
+const MH_SOLANA_PDA_MARKER=new TextEncoder().encode('ProgramDerivedAddress');
 async function mhSolanaSha256(parts){
  const data=new Uint8Array(parts.reduce((n,p)=>n+(p?.length??p?.byteLength??0),0));
  let o=0;
@@ -18,7 +19,7 @@ function mhSolanaDecode58(text){
   for(let j=0;j<bytes.length;j++){bytes[j]+=carry;carry=bytes[j]>>8;bytes[j]&=255;}
   while(carry){bytes.push(carry&255);carry>>=8;}
  }
- for(let i=0;i<text.length&&text[i]==='1';i++)bytes.push(0);
+ for(let i=0;i<text.length-1&&text[i]==='1';i++)bytes.push(0);
  return new Uint8Array(bytes.reverse());
 }
 function mhSolanaEncode58(buffer){
@@ -31,17 +32,26 @@ function mhSolanaEncode58(buffer){
   for(let j=0;j<digits.length;j++){const x=digits[j]*256+carry;digits[j]=x%58;carry=(x/58)|0;}
   while(carry){digits.push(carry%58);carry=(carry/58)|0;}
  }
- let zeros=0;while(zeros<source.length&&!source[zeros])zeros++;
- return '1'.repeat(zeros)+digits.reverse().map(d=>ALPHABET[d]).join('');
+ let out='';
+ for(let i=0;i<source.length-1&&source[i]===0;i++)out+='1';
+ return out+digits.reverse().map(d=>ALPHABET[d]).join('');
 }
-async function mhSolanaIsOnCurve(bytes){
- try{
-  const key=new Uint8Array(12+32);
-  key.set([0x30,0x2a,0x30,0x05,0x06,0x03,0x2b,0x65,0x70,0x03,0x21,0x00]);
-  key.set(bytes,12);
-  await crypto.subtle.importKey('spki',key,{name:'Ed25519'},false,['verify']);
-  return true;
- }catch{return false;}
+function mhSolanaIsOnCurve(bytes){
+ const P=2n**255n-19n;
+ const D=37095705934669439343138083508754565189542113879843219016388785533085940283555n;
+ const mod=a=>{const r=a%P;return r>=0n?r:r+P;};
+ const pow=(b,e)=>{let r=1n,x=b%P;while(e){if(e&1n)r=r*x%P;x=x*x%P;e>>=1n;}return r;};
+ if(bytes.length!==32)return false;
+ let y=0n;
+ for(let i=0;i<31;i++)y|=BigInt(bytes[i])<<(8n*BigInt(i));
+ y|=BigInt(bytes[31]&0x7f)<<248n;
+ if(y>=P)return false;
+ const y2=mod(y*y),u=mod(y2-1n),v=mod(D*y2+1n);
+ const x2=mod(u*pow(v,P-2n));
+ const leg=pow(x2,(P-1n)/2n);
+ if(leg!==0n&&leg!==1n)return false;
+ if(x2===0n&&(bytes[31]&0x80)!==0)return false;
+ return true;
 }
 async function mhSolanaAta(owner,mint){
  const ownerBytes=mhSolanaDecode58(owner);
@@ -49,8 +59,8 @@ async function mhSolanaAta(owner,mint){
  const tokenBytes=mhSolanaDecode58(MH_SOLANA_PROGRAMS.TOKEN_PROGRAM_ID);
  const ataProg=mhSolanaDecode58(MH_SOLANA_PROGRAMS.ASSOCIATED_TOKEN_PROGRAM_ID);
  for(let bump=255;bump>=0;bump--){
-  const hash=await mhSolanaSha256([ownerBytes,tokenBytes,mintBytes,new Uint8Array([bump]),ataProg]);
-  if(!(await mhSolanaIsOnCurve(hash)))return mhSolanaEncode58(hash);
+  const hash=await mhSolanaSha256([ownerBytes,tokenBytes,mintBytes,new Uint8Array([bump]),ataProg,MH_SOLANA_PDA_MARKER]);
+  if(!mhSolanaIsOnCurve(hash))return mhSolanaEncode58(hash);
  }
  throw Error('ATA indisponível.');
 }

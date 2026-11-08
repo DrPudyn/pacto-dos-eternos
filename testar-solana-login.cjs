@@ -53,7 +53,28 @@ server.listen(0,'127.0.0.1',async()=>{
   const again=await signed('auth/link',{name:'Legado',password:'senha-antiga-123'},walletFixture());
   assert.equal(again.status,409);
 
-  const bots=(await call('leaderboard',undefined,login.cookie)).value.rows.map(row=>row.name);
+  const renamed=await call('profile/nick',{name:'Lâmina Norte'},login.cookie);
+  assert.equal(renamed.status,200);
+  assert.equal(renamed.value.name,'Lâmina Norte');
+  assert.equal(renamed.value.needsNick,false);
+  assert.equal((await call('state',undefined,login.cookie)).value.name,'Lâmina Norte');
+  const taken=await call('profile/nick',{name:'Legado'},login.cookie);
+  assert.equal(taken.status,409);
+  const addressName=await call('profile/nick',{name:'*'},login.cookie);
+  assert.equal(addressName.status,400);
+  app.close();
+  const dbNamed=JSON.parse(fs.readFileSync(path.join(dir,'jogadores.json'),'utf8'));
+  const row=dbNamed.users.find(u=>u.walletAddress===nova.address);
+  row.name=nova.address;
+  fs.writeFileSync(path.join(dir,'jogadores.json'),JSON.stringify(dbNamed));
+  app=service({dir});
+  const relog=await signed('auth/login',{},nova);
+  assert.equal(relog.value.needsNick,true);
+  const chosen=await call('profile/nick',{name:'Carteira Nova'},relog.cookie);
+  assert.equal(chosen.status,200);
+  assert.equal(chosen.value.needsNick,false);
+
+  const bots=(await call('leaderboard',undefined,relog.cookie)).value.rows.map(row=>row.name);
   for(const bot of ['IA Arashi','IA Fênix','IA Lobo'])assert.ok(bots.includes(bot),bot);
 
   console.log('OK: nonce, assinatura, cadastro, vínculo único, login por carteira e bots preservados.');

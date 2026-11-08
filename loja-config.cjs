@@ -1,11 +1,9 @@
 const {isWalletAddress}=require('./solana-auth.cjs');
 const MINTS_MAINNET={
  usdc:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
- usdt:'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
 };
 const MINTS_DEVNET={
  usdc:'4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
- usdt:'EJwZgeZrdC8TXTQbQBoL6bfuAnFUUyNFbahB3uD9YHX',
 };
 function parseUsd(name,fallback){
  const raw=process.env[name];
@@ -36,7 +34,10 @@ function load(options={}){
  const welcomeDiscount=parseUsd('LOJA_PACOTE_DESCONTO',0.15);
  const welcomeLimit=parseIntEnv('LOJA_PACOTE_LIMITE_CONTA',1);
  const welcomePackUsd=process.env.LOJA_PRECO_PACOTE_USD!==undefined&&process.env.LOJA_PRECO_PACOTE_USD!==''?parseUsd('LOJA_PRECO_PACOTE_USD',9.56):welcomePriceUsd(priceCharacterUsd,priceWeaponUsd,welcomeDiscount);
- const mints=cluster==='devnet'?MINTS_DEVNET:MINTS_MAINNET;
+ const defaults=cluster==='devnet'?MINTS_DEVNET:MINTS_MAINNET;
+ const usdcOverride=(process.env.LOJA_MINT_USDC||'').trim();
+ if(usdcOverride&&!isWalletAddress(usdcOverride))throw Error('LOJA_MINT_USDC não é um mint válido.');
+ const mints={usdc:usdcOverride||defaults.usdc};
  return {
   enabled,
   receiver:enabled?receiver:null,
@@ -52,7 +53,6 @@ function load(options={}){
   },
   paymentOptions:[
    {id:'usdc',label:'USDC',mint:mints.usdc},
-   {id:'usdt',label:'USDT',mint:mints.usdt},
   ],
   orderTtlMs:options.orderTtlMs??15*60*1000,
  };

@@ -1,26 +1,45 @@
-.loja-dialog .loja-body{max-width:min(920px,96vw);display:grid;gap:14px}
-.loja-intro{color:#e8d5a8;font-size:13px;text-align:center;margin:0}
-.loja-balances{border:1px solid #4a3b28;border-radius:10px;padding:10px 14px;background:#121820cc}
-.loja-balance-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:12px 20px;font-size:13px;color:#ffe9b0}
-.loja-products{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.loja-product{position:relative;display:grid;gap:8px;justify-items:center;text-align:center;padding:14px 10px 12px;border:2px solid #5c4a32;border-radius:12px;background:linear-gradient(180deg,#1c2430 0%,#111820 100%);color:#f7e7b8;cursor:pointer;transition:border-color .2s,box-shadow .2s}
-.loja-product[aria-pressed=true]{border-color:#e8b84a;box-shadow:0 0 18px #e8b84a55,inset 0 0 12px #e8b84a22}
-.loja-product-highlight{border-color:#c9a227;background:linear-gradient(180deg,#2a2418 0%,#151c26 55%,#101820 100%);animation:loja-glow 3s ease-in-out infinite}
-@keyframes loja-glow{0%,100%{box-shadow:0 0 12px #ffd56a33}50%{box-shadow:0 0 22px #ffd56a66}}
-.loja-badge{position:absolute;top:8px;right:8px;background:#c41e3a;color:#fff;font-weight:800;font-size:11px;padding:3px 7px;border-radius:6px;letter-spacing:.04em;box-shadow:0 2px 6px #0008}
-.loja-product-art img{width:56px;height:56px;image-rendering:pixelated;object-fit:contain;filter:drop-shadow(0 0 6px #ffe38a66)}
-.loja-product-price{color:#ffe38a;font-size:14px}
-.loja-product-sold{color:#ff9f9f}
-.loja-checkout{border:1px solid #4a3b28;border-radius:10px;padding:12px 14px;background:#0f141acc;display:grid;gap:8px}
-.loja-checkout label{font-size:12px;color:#cbb98d}
-.loja-checkout select,.loja-checkout input{background:#1a222c;border:1px solid #4a3b28;color:#fff;border-radius:6px;padding:8px}
-.loja-total{font-weight:700;color:#ffe9b0;margin:0}
-.loja-message{min-height:1.2em;color:#ffb4b4;text-align:center;margin:0}
-.loja-soon{font-size:20px;text-align:center;color:#cbb98d;padding:32px;letter-spacing:.2em}
-.refuge-destination.refuge-store::before{content:'';position:absolute;inset:-10%;background:radial-gradient(circle,#ffe9a044 0%,transparent 70%);pointer-events:none;animation:loja-glow 2.5s ease-in-out infinite}
-.refuge-store .refuge-store-icon{display:block;width:36px;height:36px;margin:0 auto 4px;background:url('./loja-store-icon.png') center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 0 8px #ffe9a0aa)}
-.refuge-mobile-store .refuge-mobile-link::before{content:'◆ ';color:#ffd56a}
-.lobby-loja-shortcut{position:absolute;right:12px;bottom:108px;z-index:12;display:grid;justify-items:center;gap:4px;padding:0;border:none;background:none;cursor:pointer}
-.lobby-loja-shortcut img{width:52px;height:52px;image-rendering:pixelated;filter:drop-shadow(0 0 10px #ffe38a99);animation:loja-glow 3s ease-in-out infinite}
-.lobby-loja-shortcut span{font:700 10px/1.2 system-ui,sans-serif;color:#ffe9b0;letter-spacing:.12em;text-shadow:0 1px 4px #000}
-.has-refuge .lobby-loja-shortcut{bottom:140px}
+/* Loja no mesmo livro do códice: madeira, pergaminho, pedra e ouro. */
+.loja-dialog.eternal-menu.panel{width:min(880px,calc(100vw - 32px));max-width:880px;border:4px solid #362328;border-radius:0;background:#70432b;box-shadow:inset 0 0 0 3px #b98646,0 0 0 2px #d2a05b,8px 12px 0 #080a13a8;color:#402b20}
+.loja-dialog .panel-head{background:repeating-linear-gradient(0deg,#ffffff08 0 2px,transparent 2px 5px),linear-gradient(180deg,#3a2a22,#241910);border-bottom:2px solid #b98646}
+.loja-dialog .panel-title{color:#f4dfac}
+.loja-dialog .loja-body{display:grid;gap:12px;margin:8px;padding:16px 16px 18px;background:linear-gradient(90deg,#c7a16e,#e4c89a 8%,#e2c498 92%,#c4a16d);box-shadow:inset 0 0 0 5px #bd935a77,inset 0 0 0 8px #efd9b044,inset 12px 0 18px #5a352b22}
+.loja-intro{margin:0;text-align:center;color:#5c4128;font:18px/1.35 'Pixelify Sans',sans-serif}
+.loja-balances{border:2px solid #6d5330;padding:10px 14px;background:#f6e7c8;box-shadow:inset 0 0 0 2px #fff4de66,2px 3px #5a3b24}
+.loja-balance-line{margin:0;color:#6a4a22;font:18px 'Jersey 10',sans-serif;letter-spacing:.14em}
+.loja-balance-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;color:#3d2918;font:16px/1.3 'Pixelify Sans',sans-serif}
+.loja-balance-list li{padding-left:14px;position:relative}
+.loja-balance-list li:before{content:'';position:absolute;left:0;top:.45em;width:8px;height:8px;background:#c9a15a;transform:rotate(45deg);box-shadow:inset 1px 1px #fff6,inset -1px -1px #0003}
+.loja-ledger{display:grid;gap:10px}
+.loja-ware{position:relative;display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:10px 12px;text-align:left;cursor:pointer;color:#3d2918;border:2px solid #6d5330;background:linear-gradient(100deg,#f3e2c4,#e7d0a4);box-shadow:inset 0 0 0 2px #fff4de55,2px 3px #5a3b24;font-family:'Jersey 10',sans-serif}
+.loja-ware:before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;background:#9a7840}
+.loja-ware.is-bundle{background:linear-gradient(100deg,#f8e7c0,#e8c98a)}
+.loja-ware.is-bundle:before{background:#8d2a22}
+.loja-ware[aria-pressed=true]{border-color:#8a5a18;background:linear-gradient(100deg,#fff6dc,#f0d39a);box-shadow:inset 0 0 0 2px #fff8e8,0 0 0 2px #e1bc6f,2px 3px #5a3b24}
+.loja-ware.is-sold{opacity:.72;cursor:default}
+.loja-ware:hover:not(.is-sold){border-color:#a56b28}
+.loja-ware:focus-visible{outline:3px solid #f3b347;outline-offset:3px}
+.loja-ware-art{width:112px;height:112px;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 38%,#3d394d,#171c27 78%);border:3px solid #8a6a32;box-shadow:inset 0 0 0 2px #0b111e,2px 3px #554235}
+.loja-ware-art img{width:100px;height:100px;object-fit:contain}
+.loja-ware-copy{min-width:0;display:grid;gap:3px}
+.loja-ware-copy strong{font:28px/1 'Jersey 10',sans-serif;font-weight:400;letter-spacing:.3px;color:#3f2a18}
+.loja-ware-copy small{font:15px/1.3 'Pixelify Sans',sans-serif;color:#6b4e32}
+.loja-ware-sold{color:#8d2a22}
+.loja-ware-price{display:grid;justify-items:end;align-content:center;gap:3px;min-width:108px}
+.loja-ware-price b{font:28px/1 'Jersey 10',sans-serif;font-weight:400;color:#6a3e12}
+.loja-ware-price i{font:14px/1 'Pixelify Sans',sans-serif;font-style:normal;color:#7a5a38;letter-spacing:.04em}
+.loja-ware-badge{background:#8d2a22;color:#fff0c8;border:1px solid #e7c27a;padding:1px 7px;font:18px 'Jersey 10',sans-serif;box-shadow:2px 2px #5d2d1a}
+.loja-checkout{display:grid;gap:10px;padding:12px 14px;border:2px solid #6d5330;background:#241910;color:#f4dfac;box-shadow:inset 0 0 0 2px #0b111e,2px 3px #5a3b24}
+.loja-checkout h3{margin:0;color:#f4dfac;font:26px 'Jersey 10',sans-serif;letter-spacing:.08em}
+.loja-qty-label{color:#e7d0a4;font:15px 'Pixelify Sans',sans-serif}
+.loja-qty{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.loja-qty-chip{min-width:36px;height:36px;padding:0;cursor:pointer;color:#f4dfac;border:2px solid #776747;background:linear-gradient(180deg,#2a2c33,#191c25);box-shadow:inset 0 0 0 2px #0f111b;font:20px 'Jersey 10',sans-serif}
+.loja-qty-chip[aria-pressed=true]{background:#f69d37;color:#291a15;border-color:#ffd184;box-shadow:inset 0 2px #ffe09f,inset 0 -3px #ad5c27}
+.loja-total{margin:0;color:#ffe7b0;font:22px/1.3 'Jersey 10',sans-serif}
+.loja-pay-row{display:grid;grid-template-columns:1fr;gap:8px}
+.loja-pay{min-height:46px;cursor:pointer;color:#291a15;border:2px solid #ffd184;background:#f69d37;box-shadow:inset 0 2px #ffe09f,inset 0 -3px #ad5c27,2px 3px #3e2d29;font:22px 'Jersey 10',sans-serif;letter-spacing:.04em}
+.loja-pay:hover:not(:disabled){background:#ffb54f}
+.loja-pay:disabled{cursor:default;opacity:.55}
+.loja-message{min-height:1.2em;margin:0;text-align:center;color:#6a3e12;font:16px 'Pixelify Sans',sans-serif}
+.loja-soon{padding:32px;text-align:center;color:#6b4e32;font:22px 'Jersey 10',sans-serif;letter-spacing:.16em}
+.refuge-mobile-store::before{content:'◆ ';color:#ffd56a}
+@media(max-width:720px){.loja-dialog.eternal-menu.panel{width:calc(100vw - 16px)}.loja-ware{grid-template-columns:88px minmax(0,1fr);}.loja-ware-art,.loja-ware-art img{width:80px;height:80px}.loja-ware-price{grid-column:2;justify-items:start;min-width:0}.loja-pay-row{grid-template-columns:1fr}.loja-ware-copy strong,.loja-ware-price b{font-size:24px}}

@@ -1,5 +1,7 @@
 const fs=require('fs'),path=require('path');
 try{require('./gerar-loja-icone.cjs');}catch(e){console.warn('Ícones da loja:',e.message);}
+try{require('./gerar-loja-artes.cjs').main();}catch(e){console.warn('Artes da loja:',e.message);}
+try{require('./gerar-ilha-loja.cjs').main();}catch(e){console.warn('Ilha da loja:',e.message);}
 const root='minihero-offline';
 const target=root+'/build/app-0-_Askj9.js';
 for(const name of fs.readdirSync(root+'/build').filter(n=>n.endsWith('.css'))){const file=root+'/build/'+name;fs.writeFileSync(file,require('./local-economy-ui.cjs').updateEconomyStyles(fs.readFileSync(file,'utf8')));}
@@ -97,7 +99,7 @@ fs.copyFileSync('mobile.css',root+'/build/mobile.css');
 const lojaClient=fs.readFileSync('solana-spl-browser.js','utf8')+'\n'+fs.readFileSync('loja-client.js','utf8');
 const skillClient=tutorialClient+'\n'+fs.readFileSync('campaign-atb.js','utf8')+'\n'+fs.readFileSync('campaign-atb-vfx.js','utf8')+'\n'+fs.readFileSync('campaign-atb-client.js','utf8')+'\n'+fs.readFileSync('campaign-tactics.js','utf8')+'\n'+fs.readFileSync('campaign-enemies-client.js','utf8')+'\n'+fs.readFileSync('campaign-defense.js','utf8')+'\n'+fs.readFileSync('hero-rarity-client.js','utf8')+'\n'+fs.readFileSync('screen-transitions.js','utf8')+'\n'+fs.readFileSync('refuge-client.js','utf8')+'\n'+fs.readFileSync('equipment-client.js','utf8')+'\n'+fs.readFileSync('language-client.js','utf8')+'\n'+fs.readFileSync('pact-client.js','utf8')+'\n'+fs.readFileSync('assistant-client.js','utf8')+'\n'+fs.readFileSync('shop-fixed-client.js','utf8')+'\n'+fs.readFileSync('forge-client.js','utf8')+'\n'+fs.readFileSync('skill-client.js','utf8');
 fs.copyFileSync('loja.css',root+'/build/loja.css');
-for(const name of ['loja-store-icon.png','loja-welcome.png'])fs.copyFileSync('assets/'+name,root+'/build/'+name);
+for(const name of ['loja-store-icon.png','loja-welcome.png','loja-selo.png','loja-arma.png','loja-pacote.png','loja-saco.png'])fs.copyFileSync('assets/'+name,root+'/build/'+name);
 const adapter=skillClient+'\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('offline-adapter.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
 let patched=original.replace('$E(sT);export{Jp as t};',adapter+'\nexport{Jp as t};');
 patched=patched.replace('Paid from your wallet, with a studio fee of ${qo(BigInt(_n(fx)))} SOL.','Pago com saldo local fictício. Sem taxas ou carteira.');

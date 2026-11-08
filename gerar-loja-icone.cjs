@@ -16,7 +16,6 @@ const raw=Buffer.alloc((W*H+ H)*4);
 let o=0;for(let y=0;y<H;y++){raw[o++]=0;for(let x=0;x<W;x++){const [r,g,b,a]=pixel(x,y);raw[o++]=r;raw[o++]=g;raw[o++]=b;raw[o++]=a;}}
 const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(W,0);ihdr.writeUInt32BE(H,4);ihdr[8]=8;ihdr[9]=6;
 const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',zlib.deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);
-const out=path.join(__dirname,'assets/loja-store-icon.png');
-fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,png);
-fs.copyFileSync(out,path.join(__dirname,'assets/loja-welcome.png'));
-console.log('Ícones da loja gerados em assets/');
+// A placa da loja usa assets/loja-saco.png, pintado à parte. Este gerador
+// não reescreve mais o ícone cru por cima da arte.
+console.log('Ícone da loja preservado');

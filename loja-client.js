@@ -1,7 +1,12 @@
-function mhLojaUsd(n){return Number(n).toLocaleString('pt-BR',{style:'currency',currency:'USD'});}
-function mhLojaToken(amountMicro,decimals){return (amountMicro/10**decimals).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:6});}
+function mhLojaUsd(n){return 'US$ '+Number(n).toFixed(2);}
+function mhLojaToken(amountMicro,decimals){return (amountMicro/10**decimals).toFixed(2);}
 function installLoja({root,getCurrent,perform,getWallet}){
  let panel=null;
+ const arts={
+  character:new URL('./loja-selo.png',import.meta.url).href,
+  weapon:new URL('./loja-arma.png',import.meta.url).href,
+  welcome:new URL('./loja-pacote.png',import.meta.url).href,
+ };
  function open(){
   const loja=getCurrent()?.loja;
   if(!loja)return;
@@ -9,28 +14,46 @@ function installLoja({root,getCurrent,perform,getWallet}){
   const soon=loja.soon||!loja.enabled;
   dx({title:'LOJA DOS ETERNOS',className:'loja-dialog eternal-menu',fixed:true},body=>{
    panel=body;body.classList.add('loja-body');
-   const intro=J('p',{class:'loja-intro',text:soon?'Pagamentos on-chain em breve.':'Compre selos e armas com USDC ou USDT na Solana.'});
-   const balance=J('div',{class:'loja-balances'},J('p',{class:'loja-balance-line',text:'Inventário: '}),J('ul',{class:'loja-balance-list'}));
+   const intro=J('p',{class:'loja-intro',text:soon?'A loja abre assim que a carteira recebedora estiver configurada.':'O mercador do Refúgio guarda selos e armas. O pagamento sai da carteira em USDC.'});
+   const balance=J('div',{class:'loja-balances'},J('p',{class:'loja-balance-line',text:'Inventário'}),J('ul',{class:'loja-balance-list'}));
    const message=J('p',{class:'loja-message',attrs:{role:'status'}});
-   const grid=J('div',{class:'loja-products'});
-   const payBox=J('section',{class:'loja-checkout'},J('h3',{text:'Pagamento'}),J('label',{text:'Token'}),J('select',{class:'loja-token'}),J('label',{text:'Quantidade (selos/armas)'}),J('input',{class:'loja-qty',attrs:{type:'number',min:'1',max:'10',value:'1'}}),J('p',{class:'loja-total'}),J('button',{class:'loja-pay primary',attrs:{type:'button'},text:'PAGAR COM CARTEIRA'}));
+   const grid=J('div',{class:'loja-ledger'});
+   const qtyBox=J('div',{class:'loja-qty-box'},J('span',{class:'loja-qty-label',text:'Quantidade'}));
+   const qtyRow=J('div',{class:'loja-qty',attrs:{role:'group','aria-label':'Quantidade de 1 a 10'}});
+   const total=J('p',{class:'loja-total'});
+   const payRow=J('div',{class:'loja-pay-row'});
+   const payBox=J('section',{class:'loja-checkout'},J('h3',{text:'Pagamento'}),qtyBox,total,payRow);
+   qtyBox.append(qtyRow);
    body.append(intro,balance,grid,payBox,message);
-   if(soon){grid.append(J('p',{class:'loja-soon',text:'Em breve'}));payBox.hidden=true;return;}
-   let selected='character',busy=false,order=null;
    const products=loja.products??{};
+   if(!Object.keys(products).length){grid.append(J('p',{class:'loja-soon',text:'Em breve'}));payBox.hidden=true;return;}
+   let selected=products.character?'character':Object.keys(products)[0],qty=1,busy=false;
    for(const [key,item]of Object.entries(products)){
-    const card=J('button',{class:'loja-product'+(item.highlight?' loja-product-highlight':''),attrs:{type:'button','data-product':key,'aria-pressed':String(key===selected)}},
-     ...(item.badge?[J('span',{class:'loja-badge',text:item.badge})]:[]),
-     J('span',{class:'loja-product-art'},key==='welcome'?J('img',{attrs:{src:new URL('./loja-welcome.png',import.meta.url).href,alt:''}}):key==='weapon'?J('img',{attrs:{src:new URL('./weapon-chest-closed.png',import.meta.url).href,alt:''}}):J('img',{attrs:{src:W('ui/card-back.png'),alt:''}})),
-     J('strong',{text:item.label}),J('span',{class:'loja-product-price',text:mhLojaUsd(item.priceUsd)+(item.fixedQuantity?'' : ' / un.')}),...(item.subtitle?[J('small',{text:item.subtitle})]:[]),...(item.id==='welcome'&&!item.available?[J('small',{class:'loja-product-sold',text:'Já adquirido nesta conta'})]:[]));
-    card.onclick=()=>{if(busy||item.id==='welcome'&&!item.available)return;selected=key;for(const b of grid.querySelectorAll('.loja-product'))b.setAttribute('aria-pressed',String(b.dataset.product===selected));paint();};
+    const sold=item.id==='welcome'&&!item.available;
+    const card=J('button',{class:'loja-ware'+(item.highlight?' is-bundle':'')+(sold?' is-sold':''),attrs:{type:'button','data-product':key,'aria-pressed':String(key===selected)}},
+     J('span',{class:'loja-ware-art'},J('img',{attrs:{src:arts[key]||arts.character,alt:'',draggable:'false'}})),
+     J('span',{class:'loja-ware-copy'},
+      J('strong',{text:item.label}),
+      ...(item.subtitle?[J('small',{text:item.subtitle})]:[]),
+      ...(sold?[J('small',{class:'loja-ware-sold',text:'Já adquirido nesta conta'})]:[])),
+     J('span',{class:'loja-ware-price'},
+      ...(item.badge?[J('span',{class:'loja-ware-badge',text:item.badge})]:[]),
+      J('b',{text:mhLojaUsd(item.priceUsd)}),
+      J('i',{text:item.fixedQuantity?'o pacto':'cada'})));
+    card.onclick=()=>{if(busy||sold)return;selected=key;for(const b of grid.querySelectorAll('.loja-ware'))b.setAttribute('aria-pressed',String(b.dataset.product===selected));paint();};
     grid.append(card);
    }
-   const tokenSelect=payBox.querySelector('.loja-token');
-   for(const opt of loja.paymentOptions??[])tokenSelect.append(J('option',{attrs:{value:opt.mint},text:opt.label}));
-   const qtyInput=payBox.querySelector('.loja-qty');
-   const total=payBox.querySelector('.loja-total');
-   const payBtn=payBox.querySelector('.loja-pay');
+   for(let n=1;n<=10;n++){
+    const chip=J('button',{class:'loja-qty-chip',attrs:{type:'button','data-qty':String(n),'aria-pressed':String(n===1)},text:String(n)});
+    chip.onclick=()=>{if(busy)return;qty=n;paint();};
+    qtyRow.append(chip);
+   }
+   for(const opt of loja.paymentOptions??[]){
+    const btn=J('button',{class:'loja-pay loja-pay-'+opt.id,attrs:{type:'button','data-mint':opt.mint},text:'PAGAR COM '+opt.label});
+    btn.onclick=()=>pay(opt.mint,opt.label);
+    payRow.append(btn);
+   }
+   if(!(loja.paymentOptions??[]).length)payBox.hidden=true;
    function paintBalances(){
     const eq=getCurrent()?.equipment??{};
     balance.querySelector('.loja-balance-list').replaceChildren(
@@ -43,35 +66,37 @@ function installLoja({root,getCurrent,perform,getWallet}){
     const item=products[selected];
     if(!item)return;
     const fixed=item.fixedQuantity===1;
-    qtyInput.hidden=fixed;qtyInput.previousElementSibling.hidden=fixed;
-    if(fixed)qtyInput.value='1';
-    const qty=fixed?1:Math.max(item.min,Math.min(item.max,Number(qtyInput.value)||1));
-    qtyInput.value=String(qty);
-    const usd=item.priceUsd*(fixed?1:qty);
-    total.textContent=`Total: ${mhLojaUsd(usd)} · ${mhLojaToken(Math.round(usd*1_000_000),loja.decimals)} USDC/USDT`;
-    payBtn.disabled=busy||selected==='welcome'&&!item.available;
+    qtyBox.hidden=fixed;
+    if(fixed)qty=1;
+    qty=Math.max(item.min??1,Math.min(item.max??10,qty));
+    for(const chip of qtyRow.querySelectorAll('.loja-qty-chip'))chip.setAttribute('aria-pressed',String(Number(chip.dataset.qty)===qty));
+    const units=fixed?1:qty;
+    const usd=item.priceUsd*units;
+    const token=mhLojaToken(Math.round(usd*1_000_000),loja.decimals??6);
+    total.textContent=`Total: ${mhLojaUsd(usd)} · paga ${token} USDC`;
+    const blocked=busy||soon||(selected==='welcome'&&!item.available);
+    for(const btn of payRow.querySelectorAll('.loja-pay'))btn.disabled=blocked;
    }
-   qtyInput.oninput=paint;
-   tokenSelect.onchange=()=>{order=null;};
-   paint();
-   payBtn.onclick=async()=>{
-    if(busy)return;busy=true;message.textContent='';payBtn.disabled=true;
+   async function pay(mint,label){
+    if(busy||soon)return;busy=true;message.textContent='';paint();
     try{
      const item=products[selected];
-     const quantity=item.fixedQuantity??Math.max(item.min,Math.min(item.max,Number(qtyInput.value)||1));
-     const value=await perform('loja/pedido',{product:selected,quantity,paymentMint:tokenSelect.value});
-     order=value.lojaOrder;
+     const quantity=item.fixedQuantity??qty;
+     const value=await perform('loja/pedido',{product:selected,quantity,paymentMint:mint});
+     const order=value.lojaOrder;
      const provider=getWallet?.();
      if(!provider)throw Error('Conecte a carteira Phantom, Solflare ou Backpack.');
      const bytes=await mhSolanaBuildLojaTx(order,provider.publicKey?.toBase58?.()??order.payer??getCurrent().walletAddress);
      const signature=await mhSolanaSendPayment(provider,bytes,order.rpc);
      const confirmed=await perform('loja/confirmar',{orderId:order.orderId,signature});
-     message.textContent='Compra confirmada!';
+     message.textContent='Pagamento em '+label+' confirmado.';
      if(confirmed.lojaResult?.granted?.revelation)mhLojaRevealWelcome(confirmed.lojaResult.granted.revelation,{getCurrent,panels:globalThis.mhLojaRevealCtx});
      else paint();
-    }catch(e){message.textContent=e.message||'Falha no pagamento.';paint();}
-    finally{busy=false;}
-   };
+    }catch(e){message.textContent=e.message||'Falha no pagamento.';}
+    finally{busy=false;paint();}
+   }
+   paint();
+   if(soon){message.textContent='Pagamentos on-chain em breve.';for(const btn of payRow.querySelectorAll('.loja-pay'))btn.disabled=true;}
   });
  }
  return {open,refresh:()=>panel?null:null};
