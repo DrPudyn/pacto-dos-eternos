@@ -100,6 +100,14 @@ patched=patched.replace('Paid from your wallet, with a studio fee of ${qo(BigInt
 patched=patched.replaceAll('Paid from your wallet, with a studio fee of ${qo(BigInt(hn))} SOL.','Pago com saldo local fictício.');
 fs.writeFileSync(target,patched);
 const shared=skillClient+'\nvar mhReleaseNotes='+JSON.stringify(require('./release-notes.cjs'))+';\nawait mhPrepareHeroRarity();\n'+'\n'+fs.readFileSync('campaign-client.js','utf8')+'\n'+fs.readFileSync('shared-adapter.js','utf8').replaceAll('MHDG','Ouro')+'\n'+fs.readFileSync('tower-client.js','utf8')+'\n'+fs.readFileSync('codex-client.js','utf8')+'\n'+fs.readFileSync('festival-client.js','utf8')+'\nmhInstallLanguage();mhInstallScreenTransitions();';
+require('./assets/arqueiro/desenhar-arqueiro.cjs').draw(path.join(__dirname,'assets/arqueiro'));
+for(const [src,dst] of [['archer-idle.png','archer-idle-P3SxISc4.png'],['archer-walk.png','archer-walk-BSlfYEZv.png'],['archer-attack.png','archer-attack-ClxIWz7r.png']]){
+  const from=path.join(__dirname,'assets/arqueiro',src);
+  for(const dir of [root+'/build',root+'/shared-build']){
+    fs.mkdirSync(dir,{recursive:true});
+    fs.copyFileSync(from,path.join(dir,dst));
+  }
+}
 fs.mkdirSync(root+'/shared-build',{recursive:true});
 for(const file of fs.readdirSync(root+'/build'))if(file!=='shared-app.js')fs.copyFileSync(root+'/build/'+file,root+'/shared-build/'+file);
 fs.writeFileSync(root+'/shared-build/app-0-_Askj9.js',original.replace('$E(sT);export{Jp as t};',shared+'\nexport{Jp as t};'));
