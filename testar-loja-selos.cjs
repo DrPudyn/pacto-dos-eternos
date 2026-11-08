@@ -10,7 +10,11 @@ for(const sample of [Buffer.alloc(32),Buffer.from([0,0,1,2,3]),Buffer.from([0,25
  assert.deepEqual(bs58.decode(bs58.encode(sample)),sample);
 }
 assert.equal(associatedTokenAddress('CH5hxStZQZTLhXt7FD1okkeN6V2Dhq4QvD6XhJf1Ufgv','4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),'JA9gH9BEc8y2q7YN5VwyjnvwozqmurrUuw2ymFo1S8wu');
-const browser=vm.runInNewContext(fs.readFileSync('solana-spl-browser.js','utf8')+'\n({ata:mhSolanaAta,decode:mhSolanaDecode58,encode:mhSolanaEncode58,programs:MH_SOLANA_PROGRAMS})',{crypto,TextEncoder,Uint8Array,fetch});
+const browserSource=fs.readFileSync('solana-spl-browser.js','utf8');
+function browserApi(fetchImpl){
+ return vm.runInNewContext(browserSource+'\n({ata:mhSolanaAta,decode:mhSolanaDecode58,encode:mhSolanaEncode58,programs:MH_SOLANA_PROGRAMS,rpc:mhSolanaRpc})',{crypto,TextEncoder,Uint8Array,AbortController,setTimeout,clearTimeout,fetch:fetchImpl});
+}
+const browser=browserApi(fetch);
 assert.equal(browser.programs.ASSOCIATED_TOKEN_PROGRAM_ID,PROGRAMS.ASSOCIATED_TOKEN_PROGRAM_ID);
 assert.equal(browser.decode(PROGRAMS.SYSTEM_PROGRAM_ID).length,32);
 assert.equal(browser.encode(new Uint8Array(32)),PROGRAMS.SYSTEM_PROGRAM_ID);
@@ -39,7 +43,14 @@ process.env.LOJA_CARTEIRA_RECEBEDORA=receiver;
 process.env.LOJA_SOLANA_CLUSTER='devnet';
 const lojaConfig=load();
 const txMocks=new Map();
-const app=require('./shared-service.cjs').service({dir,lojaConfig,getTransaction:async(_rpc,sig)=>txMocks.get(sig)??null,fetch:async()=>({})});
+const rpcCalls=[];
+const app=require('./shared-service.cjs').service({dir,lojaConfig,getTransaction:async(_rpc,sig)=>txMocks.get(sig)??null,fetch:async(url,init)=>{
+ rpcCalls.push({url,body:init?.body});
+ const req=JSON.parse(init.body);
+ if(req.method==='getLatestBlockhash')return {ok:true,status:200,async text(){return JSON.stringify({jsonrpc:'2.0',id:req.id,result:{value:{blockhash:'block111',lastValidBlockHeight:9}}});}};
+ if(req.method==='sendTransaction')return {ok:true,status:200,async text(){return JSON.stringify({jsonrpc:'2.0',id:req.id,result:'sigRpc'});}};
+ return {ok:false,status:403,async text(){return JSON.stringify({error:{code:403,message:'Access forbidden from '+url}});}};
+}});
 const server=http.createServer((req,res)=>app.handle(req,res,new URL(req.url,'http://127.0.0.1')));
 server.listen(0,'127.0.0.1',async()=>{
  const base='http://127.0.0.1:'+server.address().port+'/shared-api/';
@@ -62,6 +73,12 @@ server.listen(0,'127.0.0.1',async()=>{
   const order=unit.createOrder(db,user,{product:'character',quantity:2,paymentMint:lojaConfig.mints.usdc});
   assert.ok(order.reference);
   assert.equal(order.amountMicro,1_000_000);
+  assert.equal(order.rpc,undefined);
+  assert.equal(unit.publicView(user).rpc,undefined);
+  assert.equal(JSON.stringify(unit.publicView(user)).includes(lojaConfig.rpc),false);
+  assert.equal(JSON.stringify(order).includes(lojaConfig.rpc),false);
+  const closed=createLojaService({config:{...lojaConfig,enabled:false,rpc:'https://rpc-secreto.example'},fetch:async()=>{throw Error('não devia chamar');}});
+  assert.equal((await closed.proxyRpc({jsonrpc:'2.0',id:1,method:'getLatestBlockhash',params:[]})).status,503);
   const bad=verifyPayment(mockTx({reference:'x',mint:lojaConfig.mints.usdc,amount:'999999',destination:order.destinationAta,authority:user.walletAddress}),{reference:order.reference,mint:order.paymentMint,amountMicro:order.amountMicro,decimals:6,destinationAta:order.destinationAta});
   assert.equal(bad.ok,false);
   const good=verifyPayment(mockTx({reference:order.reference,mint:order.paymentMint,amount:String(order.amountMicro),destination:order.destinationAta,authority:user.walletAddress}),{reference:order.reference,mint:order.paymentMint,amountMicro:order.amountMicro,decimals:6,destinationAta:order.destinationAta,payer:user.walletAddress});
@@ -129,10 +146,58 @@ server.listen(0,'127.0.0.1',async()=>{
   assert.equal(dup[0].value.lojaOrder.receiver,receiver);
   assert.equal(dup[0].value.loja.paymentOptions.length,1);
   assert.equal(dup[0].value.loja.paymentOptions[0].id,'usdc');
+  assert.equal(dup[0].value.lojaOrder.rpc,undefined);
+  assert.equal(dup[0].value.loja.rpc,undefined);
+  assert.equal(JSON.stringify(dup[0].value).includes(lojaConfig.rpc),false);
+  const anon=await call('loja/rpc',{jsonrpc:'2.0',id:1,method:'getLatestBlockhash',params:[{commitment:'finalized'}]});
+  assert.equal(anon.status,401);
+  const beforeCalls=rpcCalls.length;
+  const blocked=await call('loja/rpc',{jsonrpc:'2.0',id:1,method:'getBalance',params:['11111111111111111111111111111111']},cookie);
+  assert.equal(blocked.status,400);
+  assert.match(blocked.value.error,/não é permitida/);
+  assert.equal(rpcCalls.length,beforeCalls);
+  const big=await call('loja/rpc',{jsonrpc:'2.0',id:1,method:'getAccountInfo',params:['x'.repeat(9000)]},cookie);
+  assert.equal(big.status,413);
+  assert.match(big.value.error,/grande demais/);
+  const block=await call('loja/rpc',{jsonrpc:'2.0',id:7,method:'getLatestBlockhash',params:[{commitment:'finalized'}]},cookie);
+  assert.equal(block.status,200);
+  assert.equal(block.value.result.value.blockhash,'block111');
+  assert.equal(block.value.id,7);
+  assert.equal(JSON.stringify(block.value).includes(lojaConfig.rpc),false);
+  assert.equal(JSON.stringify(block.value).includes('Access forbidden'),false);
+  assert.equal(rpcCalls.at(-1).url,lojaConfig.rpc);
+  assert.equal(JSON.parse(rpcCalls.at(-1).body).method,'getLatestBlockhash');
+  const forbidden=await call('loja/rpc',{jsonrpc:'2.0',id:1,method:'getAccountInfo',params:['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v']},cookie);
+  assert.equal(forbidden.status,502);
+  assert.equal(forbidden.value.error,'A rede Solana não respondeu. Tente novamente em instantes.');
+  assert.equal(JSON.stringify(forbidden.value).includes(lojaConfig.rpc),false);
+  assert.equal(JSON.stringify(forbidden.value).includes('Access forbidden'),false);
+  const sent=await call('loja/rpc',{jsonrpc:'2.0',id:1,method:'sendTransaction',params:['wire',{encoding:'base58'}]},cookie);
+  assert.equal(sent.status,200);
+  assert.equal(sent.value.result,'sigRpc');
+  const payer2=walletFixture();
+  const reg2=await signed('auth/register',{name:'Loja RPC'},payer2);
+  assert.equal(reg2.status,200);
+  let limited;
+  for(let n=0;n<21;n++)limited=await call('loja/rpc',{jsonrpc:'2.0',id:1,method:'getSignatureStatuses',params:[[fakeSig()]]},reg2.cookie);
+  assert.equal(limited.status,429);
+  assert.match(limited.value.error,/Muitas consultas/);
+  let seen;
+  const browserRpc=browserApi(async(url,init)=>{
+   seen={url,init};
+   if(String(url).includes('solana.com'))throw Error('RPC direto');
+   return {ok:true,json:async()=>({jsonrpc:'2.0',id:1,result:{value:{blockhash:'zz'}}})};
+  });
+  assert.equal((await browserRpc.rpc('getLatestBlockhash',[{commitment:'finalized'}])).value.blockhash,'zz');
+  assert.equal(seen.url,'/shared-api/loja/rpc');
+  assert.equal(seen.init.credentials,'same-origin');
+  assert.equal(JSON.parse(seen.init.body).method,'getLatestBlockhash');
+  const broken=browserApi(async()=>{throw new TypeError('Failed to fetch');});
+  await assert.rejects(()=>broken.rpc('getLatestBlockhash',[]),/não respondeu/);
   const usdt=await call('loja/pedido',{product:'weapon',quantity:1,paymentMint:'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'},cookie);
   assert.equal(usdt.status,400);
   assert.match(usdt.value.error,/USDC/);
 
-  console.log('OK: preços, só USDC, ATA da devnet, idempotência da assinatura, pedido único, RPC fora e pacote de boas-vindas.');
+  console.log('OK: preços, só USDC, ATA da devnet, idempotência da assinatura, pedido único, proxy RPC e pacote de boas-vindas.');
  }catch(e){console.error(e);process.exitCode=1;}finally{server.close();try{app.close();}catch{}}
 });

@@ -111,10 +111,28 @@ function mhSolanaTransferCheckedIx(source,mint,destination,owner,amountMicro,dec
   ...extra.map(pubkey=>({pubkey,isSigner:false,isWritable:false})),
  ]};
 }
+const MH_SOLANA_RPC_FAIL='A rede Solana não respondeu. Tente novamente em instantes.';
+async function mhSolanaRpc(method,params){
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),20000);
+ let res,body;
+ try{
+  res=await fetch('/shared-api/loja/rpc',{method:'POST',credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+  body=await res.json();
+ }catch{throw Error(MH_SOLANA_RPC_FAIL);}
+ finally{clearTimeout(timeout);}
+ const fault=body?.error;
+ if(!res.ok||fault){
+  const message=typeof fault==='string'?fault:fault?.message;
+  throw Error(typeof message==='string'&&message&&!/failed to fetch|networkerror|load failed|access forbidden/i.test(message)?message:MH_SOLANA_RPC_FAIL);
+ }
+ if(!body||!Object.prototype.hasOwnProperty.call(body,'result'))throw Error(MH_SOLANA_RPC_FAIL);
+ return body.result;
+}
 async function mhSolanaBuildLojaTx(order,payer){
- const block=await fetch(order.rpc,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getLatestBlockhash',params:[{commitment:'finalized'}]})}).then(r=>r.json());
- const blockhash=block?.result?.value?.blockhash;
- if(!blockhash)throw Error('Não foi possível obter blockhash da Solana.');
+ const block=await mhSolanaRpc('getLatestBlockhash',[{commitment:'finalized'}]);
+ const blockhash=block?.value?.blockhash;
+ if(!blockhash)throw Error('Não foi possível obter o bloco da Solana. Tente novamente em instantes.');
  const sourceAta=order.sourceAta;
  if(!sourceAta)throw Error('Pedido sem conta de origem. Crie o pedido novamente.');
  return mhSolanaCompileTx({

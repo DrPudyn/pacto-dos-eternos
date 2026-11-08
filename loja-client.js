@@ -95,12 +95,15 @@ function installLoja({root,getCurrent,perform,getWallet}){
      const provider=getWallet?.();
      if(!provider)throw Error('Conecte a carteira Phantom, Solflare ou Backpack.');
      const bytes=await mhSolanaBuildLojaTx(order,provider.publicKey?.toBase58?.()??order.payer??getCurrent().walletAddress);
-     const signature=await mhSolanaSendPayment(provider,bytes,order.rpc);
+     const signature=await mhSolanaSendPayment(provider,bytes);
      const confirmed=await perform('loja/confirmar',{orderId:order.orderId,signature});
      message.textContent='Pagamento em '+label+' confirmado.';
      if(confirmed.lojaResult?.granted?.revelation)mhLojaRevealWelcome(confirmed.lojaResult.granted.revelation,{getCurrent,panels:globalThis.mhLojaRevealCtx});
      else paint();
-    }catch(e){message.textContent=e.message||'Falha no pagamento.';}
+    }catch(e){
+     const raw=String(e?.message||'');
+     message.textContent=!raw||/failed to fetch|networkerror|load failed|access forbidden/i.test(raw)?'A rede Solana não respondeu. Tente novamente em instantes.':raw;
+    }
     finally{busy=false;paint();}
    }
    paint();
@@ -110,18 +113,15 @@ function installLoja({root,getCurrent,perform,getWallet}){
  syncHud();
  return {open,refresh:()=>panel?null:null,sync:syncHud};
 }
-async function mhSolanaSendPayment(provider,bytes,rpc){
+async function mhSolanaSendPayment(provider,bytes){
  const tx={serialize:()=>bytes,signatures:[]};
+ if(provider.signTransaction){
+  const signed=await provider.signTransaction(tx);
+  return mhSolanaRpc('sendTransaction',[mhSolanaEncode58(signed.serialize()),{encoding:'base58',preflightCommitment:'confirmed'}]);
+ }
  if(provider.signAndSendTransaction){
   const out=await provider.signAndSendTransaction(tx);
   return out?.signature||out;
- }
- if(provider.signTransaction){
-  const signed=await provider.signTransaction(tx);
-  const raw=signed.serialize();
-  const sig=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'sendTransaction',params:[mhSolanaEncode58(raw),{encoding:'base58',preflightCommitment:'confirmed'}]})}).then(r=>r.json());
-  if(sig.error)throw Error(sig.error.message||'Envio rejeitado.');
-  return sig.result;
  }
  throw Error('A carteira não suporta envio de transação.');
 }

@@ -27,7 +27,6 @@ function createLojaService(options={}){
    enabled:config.enabled,
    soon:!config.enabled,
    cluster:config.cluster,
-   rpc:config.enabled?config.rpc:null,
    receiver:config.receiver,
    decimals:config.decimals,
    mints:config.mints,
@@ -70,7 +69,36 @@ function createLojaService(options={}){
  }
  function presentOrder(order,meta,config){
   const amountUsd=meta.priceUsd*(meta.fixedQuantity??order.quantity);
-  return {orderId:order.id,reference:order.reference,amountMicro:order.amountMicro,amountUsd,quantity:order.quantity,product:order.product,productLabel:meta.label,paymentMint:order.paymentMint,receiver:config.receiver,destinationAta:order.destinationAta,sourceAta:order.sourceAta,decimals:config.decimals,expiresAt:order.expiresAt,cluster:config.cluster,rpc:config.rpc};
+  return {orderId:order.id,reference:order.reference,amountMicro:order.amountMicro,amountUsd,quantity:order.quantity,product:order.product,productLabel:meta.label,paymentMint:order.paymentMint,receiver:config.receiver,destinationAta:order.destinationAta,sourceAta:order.sourceAta,decimals:config.decimals,expiresAt:order.expiresAt,cluster:config.cluster};
+ }
+ const rpcMethods=new Set(['getLatestBlockhash','getAccountInfo','getTokenAccountsByOwner','sendTransaction','getSignatureStatuses']);
+ const rpcFail='A rede Solana não respondeu. Tente novamente em instantes.';
+ function rpcDenied(status,error){return {status,body:{error}};}
+ function publicRpcError(message){
+  const text=typeof message==='string'?message.trim():'';
+  if(!text||text.length>300||/access forbidden|failed to fetch|networkerror|load failed|\b403\b|api\.mainnet|api\.devnet|solana\.com|https?:\/\//i.test(text)||(config.rpc&&text.includes(config.rpc)))return rpcFail;
+  return text;
+ }
+ async function proxyRpc(payload){
+  const raw=JSON.stringify(payload??null);
+  if(Buffer.byteLength(raw)>8192)return rpcDenied(413,'A consulta à rede Solana é grande demais.');
+  if(!config.enabled||!config.rpc)return rpcDenied(503,'Loja em breve.');
+  if(!payload||typeof payload!=='object'||Array.isArray(payload))return rpcDenied(400,'Consulta inválida.');
+  if(!rpcMethods.has(payload.method))return rpcDenied(400,'Essa consulta à rede Solana não é permitida.');
+  if(payload.params!==undefined&&(!Array.isArray(payload.params)||payload.params.length>3))return rpcDenied(400,'Consulta inválida.');
+  const id=typeof payload.id==='string'||typeof payload.id==='number'?payload.id:1;
+  let res,body;
+  try{
+   res=await fetchImpl(config.rpc,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id,method:payload.method,params:payload.params??[]})});
+   if(!res||typeof res.text!=='function')throw Error('sem corpo');
+   const text=await res.text();
+   if(typeof text!=='string'||Buffer.byteLength(text)>262144)throw Error('resposta grande');
+   body=JSON.parse(text);
+  }catch{return rpcDenied(502,rpcFail);}
+  if(!res.ok||!body||typeof body!=='object'||Array.isArray(body))return rpcDenied(502,rpcFail);
+  if(body.error)return {status:200,body:{jsonrpc:'2.0',id,error:{code:Number.isInteger(body.error.code)?body.error.code:-32000,message:publicRpcError(body.error.message)}}};
+  if(!Object.prototype.hasOwnProperty.call(body,'result'))return rpcDenied(502,rpcFail);
+  return {status:200,body:{jsonrpc:'2.0',id,result:body.result}};
  }
  async function fulfill(db,user,engine,order){
   const product=config.products[order.product];
@@ -130,6 +158,6 @@ function createLojaService(options={}){
   if(granted.revelation?.weapons)equipment.reconcile(engine.player);
   return {already:false,order,granted};
  }
- return {config,publicView,createOrder,confirmOrder,pruneOrders};
+ return {config,publicView,createOrder,confirmOrder,pruneOrders,proxyRpc};
 }
 module.exports={createLojaService};

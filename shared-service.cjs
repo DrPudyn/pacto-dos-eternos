@@ -268,6 +268,12 @@ function service(options={}){
    }
    const user=authenticate(req);if(!user){result(res,401,{error:'Entre no seu perfil para continuar.'});return true;}
    if(tooMany('api:'+user.id,80,10000)){result(res,429,{error:'Muitas ações em seguida. Espere alguns segundos.'});return true;}
+   if(route==='loja/rpc'){
+    if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
+    if(tooMany('loja-rpc:'+user.id,20,10000)){result(res,429,{error:'Muitas consultas à rede Solana. Espere alguns segundos.'});return true;}
+    const out=await loja.proxyRpc(data);
+    result(res,out.status,out.body);return true;
+   }
    if(route==='profile/nick'){
     if(req.method!=='POST'){result(res,405,{error:'Método inválido.'});return true;}
     const name=typeof data.name==='string'?data.name.trim():'';
