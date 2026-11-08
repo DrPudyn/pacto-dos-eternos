@@ -56,7 +56,9 @@ async function startShared(){
   }catch(e){error.textContent=e.message??'Não foi possível conectar a carteira.';}finally{connect.disabled=false;}};
   create.onclick=async()=>{create.disabled=true;error.textContent='';try{const value=await mhSolanaFinishAuth(session.address,session.provider,'auth/register',{name:name.value.trim()});accept(value);boot();}catch(e){error.textContent=e.message;}finally{create.disabled=false;}};
   link.onclick=async()=>{link.disabled=true;error.textContent='';try{const value=await mhSolanaFinishAuth(session.address,session.provider,'auth/link',{name:legacyName.value.trim(),password:legacyPass.value});legacyPass.value='';accept(value);boot();}catch(e){error.textContent=e.message;}finally{link.disabled=false;}};
-  panel.append(J('img',{class:'eternal-form-seal',attrs:{src:W('ui/card-back.png'),alt:''}}),title,note,walletStatus,connect,registerBox.append(nameLabel,name,create),linkBox.append(J('label',{attrs:{for:'shared-link-name'},text:'Nome do perfil antigo'}),legacyName,J('label',{attrs:{for:'shared-link-password'},text:'Senha antiga'}),legacyPass,link),linkToggle,error,J('p',{class:'eternal-save-note',text:'Sem transação na blockchain. Só uma assinatura para provar que a carteira é sua.'}));
+  registerBox.append(nameLabel,name,create);
+  linkBox.append(J('label',{attrs:{for:'shared-link-name'},text:'Nome do perfil antigo'}),legacyName,J('label',{attrs:{for:'shared-link-password'},text:'Senha antiga'}),legacyPass,link);
+  panel.append(J('img',{class:'eternal-form-seal',attrs:{src:W('ui/card-back.png'),alt:''}}),title,note,walletStatus,connect,registerBox,linkBox,linkToggle,error,J('p',{class:'eternal-save-note',text:'Sem transação na blockchain. Só uma assinatura para provar que a carteira é sua.'}));
   const language=mhLanguageSetting();language.classList.add('eternal-language');
   wrap.append(language,brand,panel,J('footer',{class:'eternal-footer',text:'Colecione heróis. Enfrente monstros. Conquiste seu lugar entre os eternos.'}));root.append(wrap);
  }
