@@ -1,0 +1,26 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Alinhamento arqueiro</title><style>
+body{margin:0;background:#121722;color:#eef3ff;font:14px Arial;padding:20px}
+h2{margin:28px 0 10px;color:#f3d08b}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:end}
+.card{background:#1c2433;border:1px solid #40506a;border-radius:10px;padding:12px;text-align:center}
+.label{font-size:12px;color:#9eb0c9;margin-bottom:8px}
+.icon{width:48px;height:48px;margin:auto;background:#0b1018;position:relative}
+.icon::before{content:'';position:absolute;inset:0;border:1px dashed #4d607c;opacity:.6}
+.portrait{width:160px;height:280px;margin:auto;position:relative;background:linear-gradient(#2a1c2d,#151922);border-radius:12px;border:2px solid #b670ff;overflow:hidden}
+.portrait .card-hero{position:absolute;left:50%;transform:translateX(-50%);top:38px}
+.row-icons{display:flex;gap:18px;justify-content:center;align-items:center}
+.row-icon{width:42px;height:42px;background:#101723;border:2px solid #ff4d6d;border-radius:6px;position:relative}
+.row-icon::after{content:'';position:absolute;inset:6px;border:1px dashed #5b6a7d}
+.dungeon{display:flex;gap:10px;justify-content:center;align-items:flex-end;height:96px;background:#232018;border-radius:8px;padding:12px}
+.dun{width:64px;height:64px;position:relative}
+.dun img{width:64px;height:64px;image-rendering:pixelated}
+</style>
+<h1>Arqueiro × Maga × Lanceiro — escala e centro</h1>
+<p>Ícone de lista (crop 16×16), carta de invocação (32×32) e repouso na masmorra.</p>
+<h2>Lista de heróis (ícone 48px)</h2>
+<div class="grid" id="icons"></div>
+<h2>Carta / ficha (escala de loja)</h2>
+<div class="grid" id="cards"></div>
+<h2>Masmorra (frame idle, 2×)</h2>
+<div class="dungeon" id="dungeon"></div>
+<script type="module" src="./alinhamento-arqueiro-preview.js"></script>

@@ -27,6 +27,17 @@ function mhHeroRarityUrl(skin,action,rarity){return mhHeroPaletteUrls.get(`heroe
 function mhRarityCrop(renderer,key,rarity,x,y,w,h){const canvas=mhHeroPalettes.get(key+':'+rarity);if(!canvas)return renderer.crop(key,x,y,w,h);const variant=key+'-rarity-'+rarity;if(!renderer.textures.has(variant))renderer.textures.set(variant,P.from(canvas));return renderer.crop(variant,x,y,w,h);}
 function mhRarityCodexUrl(skin,rarity){const key=skin+':'+rarity,base=new URL('./codex-'+skin+'-pixel.png',import.meta.url).href;if(mhCodexPaletteUrls.has(key))return mhCodexPaletteUrls.get(key);if(!mhCodexPaletteJobs.has(key)){const job=(async()=>{try{if(!mhCodexBaseImages.has(base)){const image=new Image();image.src=base;mhCodexBaseImages.set(base,image.decode().then(()=>image));}const image=await mhCodexBaseImages.get(base);const url=mhColorClothes(image,skin,rarity,true).toDataURL();mhCodexPaletteUrls.set(key,url);for(const node of document.querySelectorAll('[data-rarity-codex]'))if(node.dataset.rarityCodex===key)node.src=url;}catch(e){console.warn('Retrato original preservado:',key,e);}})();mhCodexPaletteJobs.set(key,job);}return base;}
 const mhMythicReducedMotion=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
+const mhRarityAuraHex=[0xc9cfd6,0x6ee16a,0x4aa8ff,0xb670ff,0xffb22e,0xff4d6d];
+const mhRarityAuraBase=[.12,.16,.2,.27,.33,.38];
+function mhRarityAura(renderer,actor,hero,time){
+ if(!renderer.state?.rarityMovementEnabled||mhMythicReducedMotion?.matches){actor.rarityAura?.clear();return;}
+ const rarity=Math.min(5,Math.max(0,hero.rarity??0)),color=mhRarityAuraHex[rarity],tier=rarity>=4?2:rarity>=3?1:0;
+ if(!actor.rarityAura){actor.rarityAura=new nm();actor.rarityAura.blendMode='add';const idx=actor.mythicTrail?actor.container.getChildIndex(actor.mythicTrail)+1:0;actor.container.addChildAt(actor.rarityAura,idx);}
+ const pulse=tier?(.5+.5*Math.sin(time*Math.PI*(rarity>=5?4.8:3))):0,alpha=mhRarityAuraBase[rarity]+(tier?pulse*(rarity>=5?.2:.12):0),scale=1+(tier?pulse*.16:0),rx=10*scale,ry=5.5*scale,g=actor.rarityAura;
+ g.clear();g.ellipse(0,5,rx,ry).fill({color,alpha:alpha*.4});g.ellipse(0,3,rx*.72,ry*.72).fill({color,alpha});
+ if(rarity>=3)g.circle(0,1,2).fill({color:0xffffff,alpha:alpha*.3});
+ if(rarity>=5){const spark=(Math.sin(time*8)+1)*.5;for(let i=0;i<4;i++){const a=time*1.8+i*Math.PI/2;g.circle(Math.cos(a)*rx*.82,Math.sin(a)*ry*.75+2,1.3).fill({color,alpha:alpha*spark*.55});}}
+}
 function mhMythicTrail(renderer,actor,hero,time){
  if((hero.rarity!==4&&hero.rarity!==5)||!renderer.state?.rarityMovementEnabled||mhMythicReducedMotion?.matches){actor.mythicTrail?.clear();return;}
  if(!actor.mythicTrail){actor.mythicTrail=new nm();actor.container.addChildAt(actor.mythicTrail,0);actor.mythicTrailPoints=[];}
@@ -43,4 +54,4 @@ function mhMythicCritical(renderer,fx,event,age){
  fx.text.style.fill=0xff96ae;const g=fx.spark,alpha=1-age/.4,radius=5+age*38;g.position.set(q(event.x),q(event.y));
  for(let i=0;i<8;i++){const angle=i*Math.PI/4,dx=Math.round(Math.cos(angle)*radius),dy=Math.round(Math.sin(angle)*radius);g.rect(dx-1,dy-1,3,3).fill({color:i%2?0xffc07a:0xff315c,alpha});g.rect(Math.round(dx*.65),Math.round(dy*.65),2,2).fill({color:0xffe4b8,alpha:alpha*.75});}
 }
-export {mhPrepareHeroRarity,mhHeroRarityUrl,mhClothPixel,mhClothShade};
+export {mhPrepareHeroRarity,mhHeroRarityUrl,mhClothPixel,mhClothShade,mhRarityCrop,mhRarityAura,mhMythicTrail,mhMythicCritical};

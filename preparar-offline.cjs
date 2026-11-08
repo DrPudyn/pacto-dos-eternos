@@ -56,6 +56,9 @@ original=require('./dungeon-themes.cjs').addDungeonThemes(original);
 original=require('./farm-waves.cjs').applyWaveVisuals(original);
 fs.copyFileSync('previas-mapas/vampire-idle.png',root+'/build/vampire-idle.png');
 for(const skin of ['swordsman','spearman','archer','mage'])fs.copyFileSync('assets/codex-'+skin+'-pixel.png',root+'/build/codex-'+skin+'-pixel.png');
+// Sprites do arqueiro já vêm normalizados em assets/arqueiro/ (sem Python no build).
+const archerSheetHashes={idle:'archer-idle-P3SxISc4.png',walk:'archer-walk-BSlfYEZv.png',attack:'archer-attack-ClxIWz7r.png'};
+for(const [action,file] of Object.entries(archerSheetHashes))fs.copyFileSync('assets/arqueiro/archer-'+action+'.png',root+'/build/'+file);
 fs.writeFileSync(root+'/build/codex.css',fs.readFileSync('codex.css','utf8')+'\n'+fs.readFileSync('forge.css','utf8'));
 fs.copyFileSync('forge.css',root+'/build/forge.css');
 fs.copyFileSync('festival.css',root+'/build/festival.css');
@@ -121,6 +124,8 @@ console.log('Adaptador offline instalado.');
 // Keep the approved campaign map packaged with every game build.
 require('./preparar-previa-reino.cjs');
 require('./preparar-previa-raridades.cjs');
+require('./preparar-qa-arqueiro-aura.cjs');
+require('./preparar-previa-alinhamento-arqueiro.cjs');
 
 for(const name of fs.readdirSync(path.join(__dirname,'assets/campaign-bestiary')).filter(n=>/^enemy-.*\.png$/.test(n))){for(const dir of ['minihero-offline/build','minihero-offline/shared-build'])fs.copyFileSync(path.join(__dirname,'assets/campaign-bestiary',name),path.join(__dirname,dir,name));}
 fs.copyFileSync('assets/campaign-bestiary/bestiario.html','minihero-offline/shared-build/bestiario.html');
